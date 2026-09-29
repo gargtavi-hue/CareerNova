@@ -155,6 +155,11 @@
     const switchBtn = document.getElementById('auth-mode-switch-btn');
     const hintEl = document.getElementById('password-strength-hint');
 
+    const nameInput = document.getElementById('auth-name');
+    const emailInput = document.getElementById('auth-email');
+    const passInput = document.getElementById('auth-password');
+    const confirmPassInput = document.getElementById('auth-confirm-password');
+
     if (hintEl) hintEl.innerText = '';
 
     if (authMode === 'LOGIN') {
@@ -175,6 +180,12 @@
 
       if (promptEl) promptEl.innerText = "Don't have an account?";
       if (switchBtn) switchBtn.innerText = "Create Account";
+
+      if (emailInput && (!emailInput.value || emailInput.value.includes('candidate.'))) {
+        emailInput.value = currentRole === 'Student' ? 'sarvagya.anand070@gmail.com' : 'tpo@university.edu';
+      }
+      if (passInput) passInput.value = currentRole === 'Student' ? 'Sarvo@123' : 'Alex@2026';
+
     } else {
       if (titleEl) titleEl.innerText = currentRole === 'Student' ? 'Create Student Account' : 'Create TPO Officer Account';
       if (subtitleEl) subtitleEl.innerText = currentRole === 'Student' 
@@ -199,6 +210,13 @@
 
       if (promptEl) promptEl.innerText = "Already have an account?";
       if (switchBtn) switchBtn.innerText = "Sign In";
+
+      if (nameInput) nameInput.value = nameInput.value || 'Candidate Student';
+      if (emailInput && (emailInput.value === 'sarvagya.anand070@gmail.com' || emailInput.value === 'tpo@university.edu')) {
+        emailInput.value = 'candidate.new@university.edu';
+      }
+      if (passInput) passInput.value = 'CareerNova@2026';
+      if (confirmPassInput) confirmPassInput.value = 'CareerNova@2026';
     }
   }
 
