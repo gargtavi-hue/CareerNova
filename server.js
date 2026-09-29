@@ -7,6 +7,7 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 dotenv.config();
@@ -21,39 +22,91 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(__dirname));
 
-// In-Memory Data Stores
+// In-Memory & File-Persisted Data Stores
+const USERS_FILE = path.join(__dirname, 'data', 'users.json');
 const users = new Map();
 const pendingOtps = new Map();
 const resetTokens = new Map();
 
+function saveUsersToFile() {
+  try {
+    const dir = path.dirname(USERS_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const usersArray = Array.from(users.entries());
+    fs.writeFileSync(USERS_FILE, JSON.stringify(usersArray, null, 2));
+  } catch (err) {
+    console.error('Failed to persist users to file:', err);
+  }
+}
+
+function loadUsersFromFile() {
+  try {
+    if (fs.existsSync(USERS_FILE)) {
+      const data = fs.readFileSync(USERS_FILE, 'utf8');
+      const usersArray = JSON.parse(data);
+      for (const [email, userObj] of usersArray) {
+        users.set(email, userObj);
+      }
+      console.log(`[Database] Loaded ${users.size} persisted accounts from users.json`);
+    }
+  } catch (err) {
+    console.error('Failed to load users from file:', err);
+  }
+}
+
 // Seed Default Demo Accounts (Pre-verified for quick profile shortcuts)
 const initSeedAccounts = async () => {
-  const defaultPass = await bcrypt.hash('Alex@2026', 10);
-  users.set('alex.wright@university.edu', {
-    id: 'usr_1',
-    name: 'Alexander Wright',
-    email: 'alex.wright@university.edu',
-    college: 'Stanford University',
-    branch: 'Computer Science & Engineering',
-    year: '2026',
-    role: 'Student',
-    passwordHash: defaultPass,
-    isVerified: true,
-    createdAt: new Date().toISOString()
-  });
+  loadUsersFromFile();
 
-  users.set('tpo@university.edu', {
-    id: 'usr_2',
-    name: 'Dr. Robert Vance (TPO)',
-    email: 'tpo@university.edu',
-    college: 'Stanford University',
-    branch: 'Placement Cell',
-    year: 'Admin',
-    role: 'TPO',
-    passwordHash: defaultPass,
-    isVerified: true,
-    createdAt: new Date().toISOString()
-  });
+  const alexPass = await bcrypt.hash('Alex@2026', 10);
+  const sarvoPass = await bcrypt.hash('Sarvo@123', 10);
+
+  if (!users.has('alex.wright@university.edu')) {
+    users.set('alex.wright@university.edu', {
+      id: 'usr_1',
+      name: 'Alexander Wright',
+      email: 'alex.wright@university.edu',
+      college: 'Stanford University',
+      branch: 'Computer Science & Engineering',
+      year: '2026',
+      role: 'Student',
+      passwordHash: alexPass,
+      isVerified: true,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  if (!users.has('tpo@university.edu')) {
+    users.set('tpo@university.edu', {
+      id: 'usr_2',
+      name: 'Dr. Robert Vance (TPO)',
+      email: 'tpo@university.edu',
+      college: 'Stanford University',
+      branch: 'Placement Cell',
+      year: 'Admin',
+      role: 'TPO',
+      passwordHash: alexPass,
+      isVerified: true,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  if (!users.has('sarvagya.anand070@gmail.com')) {
+    users.set('sarvagya.anand070@gmail.com', {
+      id: 'usr_3',
+      name: 'Sarvagya Anand',
+      email: 'sarvagya.anand070@gmail.com',
+      college: 'VIT Bhopal University',
+      branch: 'Computer Science & Engineering',
+      year: '2026',
+      role: 'Student',
+      passwordHash: sarvoPass,
+      isVerified: true,
+      createdAt: new Date().toISOString()
+    });
+  }
+
+  saveUsersToFile();
 };
 
 initSeedAccounts();
@@ -308,6 +361,7 @@ app.post('/api/auth/verify-email', (req, res) => {
     };
 
     users.set(emailNorm, activatedUser);
+    saveUsersToFile();
     pendingOtps.delete(emailNorm);
 
     return res.json({
@@ -383,7 +437,7 @@ app.post('/api/auth/login', async (req, res) => {
     const user = users.get(emailNorm);
 
     if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      return res.status(401).json({ success: false, message: 'Account not found. Please click "Create Account" below to register.' });
     }
 
     if (!user.isVerified) {
@@ -392,7 +446,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     const match = await bcrypt.compare(password, user.passwordHash);
     if (!match) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+      return res.status(401).json({ success: false, message: 'Incorrect password. Please check your password or click Forgot Password.' });
     }
 
     return res.json({
