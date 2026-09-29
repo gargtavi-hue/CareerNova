@@ -20,18 +20,7 @@ import {
 } from './modules/applications.js';
 import { filterJobs, toggleSavedJob } from './modules/jobs.js';
 import { filterHackathons, registerHackathon } from './modules/hackathons.js';
-import { 
-  sendChatMessage, 
-  sendSuggestedChat,
-  resetChatSession,
-  handleChatInputInput,
-  handleChatInputKeyDown,
-  copyCode,
-  openAiSettingsModal,
-  closeAiSettingsModal,
-  saveAiKey,
-  clearAiKey
-} from './modules/chatbot.js';
+import { sendChatMessage, sendSuggestedChat } from './modules/chatbot.js';
 import { 
   openMockInterviewModal, 
   closeMockInterviewModal, 
@@ -43,10 +32,8 @@ import {
   restartMockInterview 
 } from './modules/mock-interview.js';
 import { filterTpoRoster, exportTpoReport } from './modules/tpo.js';
-import { initContextChatbot, refreshContextHelp } from './modules/context-chatbot.js';
 
 // Expose handlers to global window object for HTML inline event listeners
-window.state = state;
 window.showToast = showToast;
 window.handleAuthSubmit = handleAuthSubmit;
 window.demoSignIn = demoSignIn;
@@ -76,17 +63,9 @@ window.toggleSavedJob = toggleSavedJob;
 window.filterHackathons = filterHackathons;
 window.registerHackathon = registerHackathon;
 
-// Interactive AI Chatbot (ChatGPT / Gemini)
+// Coach
 window.sendChatMessage = sendChatMessage;
 window.sendSuggestedChat = sendSuggestedChat;
-window.resetChatSession = resetChatSession;
-window.handleChatInputInput = handleChatInputInput;
-window.handleChatInputKeyDown = handleChatInputKeyDown;
-window.copyCode = copyCode;
-window.openAiSettingsModal = openAiSettingsModal;
-window.closeAiSettingsModal = closeAiSettingsModal;
-window.saveAiKey = saveAiKey;
-window.clearAiKey = clearAiKey;
 
 // Mock Interview
 window.openMockInterviewModal = openMockInterviewModal;
@@ -102,13 +81,17 @@ window.restartMockInterview = restartMockInterview;
 window.filterTpoRoster = filterTpoRoster;
 window.exportTpoReport = exportTpoReport;
 
-// Context Help Assistant
-window.initContextChatbot = initContextChatbot;
-window.refreshContextHelp = refreshContextHelp;
-
 // Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {
   updateGaugeVisual(0);
   initDsaModule();
-  initContextChatbot();
 });
+import { NotificationManager } from './modules/notifications.js';
+import { GlobalSearchEngine } from './modules/global-search.js';
+
+// Initialize instances
+const notifications = new NotificationManager();
+const searchEngine = new GlobalSearchEngine();
+
+console.log("Member 5 Modules Loaded Successfully!");
+console.log("Current Unread Notifications:", notifications.getUnreadCount());

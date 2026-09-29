@@ -1,0 +1,49 @@
+/* careernova/css/search.css */
+
+.search-results-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
+  color: #ffffff;
+}
+
+.search-category {
+  margin-bottom: 16px;
+}
+
+.search-category:last-child {
+  margin-bottom: 0;
+}
+
+.search-category h4 {
+  color: #a1a1aa;
+  font-size: 0.85rem;
+  margin: 0 0 8px 0;
+  font-weight: 500;
+}
+
+.search-category ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.search-category li {
+  font-size: 0.9rem;
+  color: #e4e4e7;
+  padding: 4px 0;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.search-category li:hover {
+  color: #60a5fa;
+}
+
+.search-empty {
+  padding: 12px;
+  color: #71717a;
+  font-size: 0.85rem;
+}
