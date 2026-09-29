@@ -20,7 +20,7 @@ import {
 } from './modules/applications.js';
 import { filterJobs, toggleSavedJob } from './modules/jobs.js';
 import { filterHackathons, registerHackathon } from './modules/hackathons.js';
-import { sendChatMessage, sendSuggestedChat } from './modules/coach.js';
+import { sendChatMessage, sendSuggestedChat } from './modules/chatbot.js';
 import { 
   openMockInterviewModal, 
   closeMockInterviewModal, 
