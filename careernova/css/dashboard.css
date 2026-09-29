@@ -1,0 +1,233 @@
+/* CareerNova - Dashboard Layout & Readiness Gauge */
+
+/* Asymmetric 2-Column Grid (70% / 30%) */
+.dashboard-grid-asymmetric {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.column-primary {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.column-secondary {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover);
+}
+
+.card-header-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.card-title-clean {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Consolidated Placement Readiness Component */
+.readiness-consolidated-layout {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 28px;
+  align-items: center;
+}
+
+.gauge-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-svg {
+  width: 150px;
+  height: 150px;
+  transform: rotate(-90deg);
+}
+
+.gauge-bg {
+  stroke: #e2e8f0;
+  stroke-width: 10;
+}
+
+.gauge-fill {
+  stroke: url(#gauge-gradient);
+  stroke-width: 10;
+  stroke-dasharray: 440;
+  stroke-dashoffset: 440; /* 0% baseline */
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gauge-center-content {
+  position: absolute;
+  text-align: center;
+}
+
+.gauge-score-number {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.gauge-tier-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Minimalist Skill Bars */
+.skills-list-minimal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skill-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skill-label-group {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.skill-name { color: var(--text-body); }
+.skill-val { color: var(--primary-accent); font-weight: 700; }
+
+.track-minimal {
+  height: 6px;
+  width: 100%;
+  background-color: var(--bg-sidebar);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.fill-bar-minimal {
+  height: 100%;
+  background-color: var(--primary-accent);
+  border-radius: 9999px;
+  transition: width 0.8s ease;
+}
+
+/* Priority Action Card */
+.priority-action-card {
+  border-left: 4px solid var(--primary-accent);
+}
+
+.priority-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background-color: var(--primary-light);
+  color: var(--primary-accent);
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 10px;
+}
+
+.priority-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.priority-description {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.priority-action-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.priority-step-indicator {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+/* Target Drives List */
+.drives-list-clean {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.drive-item-clean {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.drive-item-clean:last-child {
+  border-bottom: none;
+}
+
+.drive-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.drive-role-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.drive-date-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-accent);
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid-asymmetric {
+    grid-template-columns: 1fr;
+  }
+}
