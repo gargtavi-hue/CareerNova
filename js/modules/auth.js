@@ -83,15 +83,23 @@ export function setAuthRole(role) {
   const tabStudent = document.getElementById('tab-student');
   const tabTpo = document.getElementById('tab-tpo');
   const emailLabel = document.getElementById('auth-email-label');
+  const emailInput = document.getElementById('auth-email');
+  const passInput = document.getElementById('auth-password');
 
   if (role === 'Student') {
     if (tabStudent) tabStudent.classList.add('active');
     if (tabTpo) tabTpo.classList.remove('active');
     if (emailLabel) emailLabel.innerText = 'College Email Address';
+    if (emailInput && (!emailInput.value || emailInput.value === 'tpo@university.edu')) {
+      emailInput.value = 'sarvagya.anand070@gmail.com';
+    }
+    if (passInput) passInput.value = 'Sarvo@123';
   } else {
     if (tabTpo) tabTpo.classList.add('active');
     if (tabStudent) tabStudent.classList.remove('active');
     if (emailLabel) emailLabel.innerText = 'Official College Email';
+    if (emailInput) emailInput.value = 'tpo@university.edu';
+    if (passInput) passInput.value = 'Alex@2026';
   }
 
   updateFormUIForCurrentState();
