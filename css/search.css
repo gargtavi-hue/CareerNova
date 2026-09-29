@@ -1,0 +1,108 @@
+/* careernova/css/search.css */
+
+.search-container {
+  position: relative;
+}
+
+.search-results-container {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  min-width: 380px;
+  max-width: 480px;
+  z-index: 1200;
+  animation: searchFadeIn 0.15s ease-out;
+}
+
+.search-results-container.hidden {
+  display: none !important;
+}
+
+@keyframes searchFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.search-results-card {
+  background-color: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 14px;
+  color: #ffffff;
+  box-shadow: 0 16px 40px -4px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.search-results-card::-webkit-scrollbar {
+  width: 5px;
+}
+
+.search-results-card::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 4px;
+}
+
+.search-category {
+  margin-bottom: 14px;
+}
+
+.search-category:last-child {
+  margin-bottom: 0;
+}
+
+.search-category h4 {
+  color: #a1a1aa;
+  font-size: 0.78rem;
+  margin: 0 0 6px 0;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.search-category ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.search-category li {
+  font-size: 0.88rem;
+  color: #e4e4e7;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.search-category li:hover {
+  color: #60a5fa;
+  background-color: #27272a;
+  transform: translateX(2px);
+}
+
+.search-item-badge {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #3f3f46;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.search-empty {
+  padding: 20px 14px;
+  color: #71717a;
+  font-size: 0.85rem;
+  text-align: center;
+}

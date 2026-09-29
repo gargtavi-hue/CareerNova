@@ -1,0 +1,2292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=1280, initial-scale=1.0">
+  <title>CareerNova | Candidate & Campus Placement Platform</title>
+  <!-- Modular Stylesheet Bundle -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- SVG Gradient Definitions -->
+  <svg style="width:0;height:0;position:absolute;" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#1e3a8a" />
+        <stop offset="100%" stop-color="#2563eb" />
+      </linearGradient>
+    </defs>
+  </svg>
+
+  <!-- ==========================================================================
+       1. GLOBAL AUTH & ONBOARDING VIEW
+       ========================================================================== -->
+  <div id="auth-view" class="auth-wrapper">
+    <div class="auth-header">
+      <div class="auth-brand">
+        <div class="auth-brand-icon">CN</div>
+        <span>CareerNova</span>
+      </div>
+    </div>
+
+    <div class="auth-card">
+      <h1 class="auth-card-title" id="auth-title">Student Sign In & Onboarding</h1>
+      <p class="auth-card-subtitle" id="auth-subtitle">Enter your college, major, and graduation year to initialize your placement portal.</p>
+
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group">
+          <label class="form-label" for="auth-name">Full Name</label>
+          <input type="text" id="auth-name" class="form-input" placeholder="e.g. Alex Wright" value="Alex Wright" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="auth-email">College Email Address</label>
+          <input type="email" id="auth-email" class="form-input" placeholder="alex.wright@university.edu" value="alex.wright@university.edu" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="auth-college">College / University Name</label>
+          <input type="text" id="auth-college" class="form-input" placeholder="e.g. Stanford University / IIT Bombay" value="Stanford University" required>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label class="form-label" for="auth-branch">Core Branch / Major</label>
+            <select id="auth-branch" class="form-input">
+              <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+              <option value="Information Technology">Information Technology</option>
+              <option value="Artificial Intelligence & Data Science">AI & Data Science</option>
+              <option value="Electrical & Electronics Engineering">Electrical Engineering</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="auth-year">Graduation Year</label>
+            <select id="auth-year" class="form-input">
+              <option value="2026">2026</option>
+              <option value="2027">2027</option>
+              <option value="2028">2028</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit"
+          class="btn-primary"
+          id="auth-submit-btn"
+          style="width: 100%; margin-top: 8px;">
+          Initialize Candidate Portal
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </button>
+      </form>
+
+      <div class="auth-presets">
+        <p>Quick Profile Sign-In Shortcuts</p>
+        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+          <button type="button" class="preset-btn" onclick="demoSignIn('Student')">As Student (Alex • CS '26)</button>
+          <button type="button" class="preset-btn" onclick="demoSignIn('TPO')">As College TPO Officer</button>
+          <button type="button" class="preset-btn" style="background-color: var(--primary-light); color: var(--primary-accent); border-color: var(--primary-border); font-weight: 700;" onclick="demoSignIn('Student'); switchView('hackathons');">🚀 Open Hackathons & Drives</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==========================================================================
+       2. MAIN DASHBOARD SHELL
+       ========================================================================== -->
+  <div id="app-shell" class="app-shell hidden">
+
+    <!-- Vertical Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="auth-brand-icon">CN</div>
+        <span class="sidebar-logo-text">CareerNova</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-category">Candidate Menu</div>
+
+        <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          <span>Dashboard</span>
+        </div>
+
+        <div class="nav-item" data-view="dsa" onclick="switchView('dsa')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+          <span>DSA Practice</span>
+        </div>
+
+        <div class="nav-item" data-view="applications" onclick="switchView('applications')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Top Tech Applications</span>
+        </div>
+
+        <div class="nav-item" data-view="hackathons" onclick="switchView('hackathons')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.6 15.11a2 2 0 00-1.022.547l-1.3 1.3a.75.75 0 00.53 1.28h16.384a.75.75 0 00.53-1.28l-1.3-1.3zM12 3v9"/></svg>
+          <span>Hackathons & Drives</span>
+        </div>
+
+        <div class="nav-category" style="margin-top: 14px;">Tools & Institution</div>
+
+        <div class="nav-item" data-view="aichat" onclick="switchView('aichat')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Nova AI (Chatbot) ✨</span>
+        </div>
+
+        <div class="nav-item" data-view="jobs" onclick="switchView('jobs')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          <span>Verified Job Postings</span>
+        </div>
+
+        <div class="nav-item" data-view="college" onclick="switchView('college')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h1M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+          <span>College TPO Portal 🎓</span>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile-summary">
+          <div class="avatar" id="sidebar-user-avatar">AW</div>
+          <div class="user-meta">
+            <div class="user-name" id="sidebar-user-name">Alex Wright</div>
+            <div class="user-role" id="sidebar-user-role">Stanford • CS '26</div>
+          </div>
+          <button class="btn-icon-ghost" title="Sign Out" onclick="handleSignOut()">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="main-content-wrapper">
+      
+      <!-- Top Bar Header -->
+      <header class="top-bar">
+        <div id="global-search-container" class="search-container">
+          <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" class="search-input" id="global-search-input" placeholder="Search Google, Amazon, DSA topics, jobs..." 
+                 oninput="handleGlobalSearchInput(this.value)" 
+                 onkeydown="handleGlobalSearchKeyDown(event)"
+                 autocomplete="off">
+          <div id="global-search-results" class="search-results-container hidden"></div>
+        </div>
+
+        <div class="top-bar-actions">
+          <div class="notification-dropdown-wrapper">
+            <button class="btn-icon-ghost notification-bell-btn" id="notification-bell-btn" title="Notification Center" onclick="toggleNotificationCenter()">
+              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+              <span class="notification-badge" id="notification-badge">3</span>
+            </button>
+            <div class="notification-center-panel hidden" id="notification-center-panel"></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Views Container -->
+      <main class="page-container">
+
+        <!-- ==================================================================
+             VIEW 1: DASHBOARD OVERVIEW
+             ================================================================== -->
+        <section id="view-dashboard" class="page-view">
+          
+          <div class="dashboard-header-compact">
+            <div class="dashboard-title-group">
+              <h1 class="page-title">Welcome back, <span id="hero-student-name">Alex Wright</span></h1>
+              <p class="page-description" id="hero-profile-subtitle">Stanford University • Computer Science & Engineering '26</p>
+            </div>
+            
+            <button class="btn-primary" style="width: auto;" onclick="openMockInterviewModal()">
+              Start Skill Diagnostic →
+            </button>
+          </div>
+
+          <!-- Asymmetric 2-Column Main Grid (~70% Left / ~30% Right) -->
+          <div class="dashboard-grid-asymmetric">
+
+            <!-- LEFT COLUMN (~70% Width) -->
+            <div class="column-primary">
+
+              <!-- Placement Readiness Card -->
+              <div class="card">
+                <div class="card-header-clean">
+                  <h3 class="card-title-clean">Placement Readiness Index</h3>
+                  <span class="badge badge-navy" id="gauge-tier-badge">Diagnostic Baseline: 0%</span>
+                </div>
+
+                <div class="readiness-consolidated-layout">
+                  <!-- Minimalist Gauge Arc Indicator -->
+                  <div class="gauge-wrapper">
+                    <svg class="gauge-svg" viewBox="0 0 150 150">
+                      <circle class="gauge-bg" cx="75" cy="75" r="65" fill="none" />
+                      <circle class="gauge-fill" id="readiness-gauge-circle" cx="75" cy="75" r="65" fill="none" />
+                    </svg>
+                    <div class="gauge-center-content">
+                      <div class="gauge-score-number" id="gauge-score-text">0%</div>
+                      <div class="gauge-tier-label">Overall Index</div>
+                    </div>
+                  </div>
+
+                  <!-- Minimalist Skill Metrics -->
+                  <div class="skills-list-minimal">
+                    <div class="skill-row">
+                      <div class="skill-label-group">
+                        <span class="skill-name">DSA & Problem Solving</span>
+                        <span class="skill-val" id="skill-dsa-text">0 / 10 Solved</span>
+                      </div>
+                      <div class="track-minimal">
+                        <div class="fill-bar-minimal" id="skill-dsa-bar" style="width: 0%;"></div>
+                      </div>
+                    </div>
+
+                    <div class="skill-row">
+                      <div class="skill-label-group">
+                        <span class="skill-name">System Architecture</span>
+                        <span class="skill-val" id="skill-sys-text">0%</span>
+                      </div>
+                      <div class="track-minimal">
+                        <div class="fill-bar-minimal" id="skill-sys-bar" style="width: 0%;"></div>
+                      </div>
+                    </div>
+
+                    <div class="skill-row">
+                      <div class="skill-label-group">
+                        <span class="skill-name">Resume & Project Audit</span>
+                        <span class="skill-val" id="skill-res-text">0%</span>
+                      </div>
+                      <div class="track-minimal">
+                        <div class="fill-bar-minimal" id="skill-res-bar" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Streamlined "Next Best Action" Card -->
+              <div class="card priority-action-card">
+                <div class="priority-badge">
+                  <span>Priority Step 1 of 4</span>
+                </div>
+                <h3 class="priority-title" id="priority-title-text">Complete Algorithmic & Systems Diagnostic</h3>
+                <p class="priority-description" id="priority-desc-text">
+                  Establish your baseline readiness score by completing a diagnostic session. This will benchmark your core problem-solving speed for upcoming campus recruitment drives.
+                </p>
+
+                <div class="priority-action-footer">
+                  <span class="priority-step-indicator" id="priority-status-indicator">Status: Recommended Immediate Action</span>
+                  <button class="btn-primary" id="priority-cta-btn" style="width: auto;" onclick="openMockInterviewModal()">
+                    Launch Diagnostic Session →
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN (~30% Width) -->
+            <div class="column-secondary">
+
+              <div class="card">
+                <div class="card-header-clean">
+                  <h3 class="card-title-clean">Target Campus Drives</h3>
+                  <span class="badge badge-green">Scheduled</span>
+                </div>
+
+                <div class="drives-list-clean">
+                  <div class="drive-item-clean">
+                    <div>
+                      <div class="drive-name">Google</div>
+                      <div class="drive-role-text">SDE University Grad 2026</div>
+                    </div>
+                    <div class="drive-date-tag">Oct 15</div>
+                  </div>
+
+                  <div class="drive-item-clean">
+                    <div>
+                      <div class="drive-name">Microsoft</div>
+                      <div class="drive-role-text">Software Engineering Drive</div>
+                    </div>
+                    <div class="drive-date-tag">Oct 20</div>
+                  </div>
+
+                  <div class="drive-item-clean">
+                    <div>
+                      <div class="drive-name">Amazon</div>
+                      <div class="drive-role-text">SDE I Campus Hiring</div>
+                    </div>
+                    <div class="drive-date-tag">Nov 02</div>
+                  </div>
+
+                  <div class="drive-item-clean">
+                    <div>
+                      <div class="drive-name">Meta</div>
+                      <div class="drive-role-text">Frontend Engineering Drive</div>
+                    </div>
+                    <div class="drive-date-tag">Nov 10</div>
+                  </div>
+                </div>
+
+                <div style="margin-top: 16px; text-align: center;">
+                  <a href="#" style="font-size: 12px; font-weight: 700; color: var(--primary-accent);" onclick="switchView('applications'); return false;">
+                    View All Drives →
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==================================================================
+             VIEW 2: DSA PRACTICE SUB-SCREEN
+             ================================================================== -->
+        <section id="view-dsa" class="page-view hidden">
+
+          <div class="dsa-header">
+            <div>
+              <div class="page-eyebrow">PLACEMENT PREPARATION</div>
+              <h1>DSA Practice <span class="streak-badge">🔥 <span id="dsa-streak">1</span> day streak</span></h1>
+              <p>Master DSA for placements with curated problems and direct LeetCode practice.</p>
+            </div>
+
+            <button class="random-challenge-btn" onclick="openRandomDsa()">
+              🎯 Random Challenge
+            </button>
+          </div>
+
+          <!-- Progress Card -->
+          <div class="dsa-progress-card">
+            <div class="dsa-progress-top">
+              <div>
+                <span class="progress-label">Your Progress</span>
+                <div class="progress-number">
+                  <span id="dsa-solved-count">0</span>
+                  <span class="progress-total">/ 10 solved</span>
+                </div>
+              </div>
+
+              <div class="dsa-percentage" id="dsa-percentage">0%</div>
+            </div>
+
+            <div class="dsa-progress-track">
+              <div id="dsa-progress-bar" class="dsa-progress-fill"></div>
+            </div>
+
+            <div class="dsa-stats">
+              <div class="dsa-stat">
+                <span class="stat-dot easy"></span>
+                <div>
+                  <strong id="dsa-easy-count">0</strong>
+                  <small>Easy</small>
+                </div>
+              </div>
+
+              <div class="dsa-stat">
+                <span class="stat-dot medium"></span>
+                <div>
+                  <strong id="dsa-medium-count">0</strong>
+                  <small>Medium</small>
+                </div>
+              </div>
+
+              <div class="dsa-stat">
+                <span class="stat-dot hard"></span>
+                <div>
+                  <strong id="dsa-hard-count">0</strong>
+                  <small>Hard</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search + Filters -->
+          <div class="dsa-controls">
+            <div class="dsa-search">
+              <span>⌕</span>
+              <input
+                type="text"
+                id="dsa-search"
+                placeholder="Search problems, topics or companies..."
+                oninput="filterDsaProblems()"
+              >
+            </div>
+
+            <select id="dsa-topic-filter" onchange="filterDsaProblems()">
+              <option value="all">All Topics</option>
+              <option value="Array">Array</option>
+              <option value="String">String</option>
+              <option value="Linked List">Linked List</option>
+              <option value="Stack">Stack</option>
+              <option value="Binary Search">Binary Search</option>
+              <option value="Tree">Tree</option>
+              <option value="Graph">Graph</option>
+              <option value="Dynamic Programming">Dynamic Programming</option>
+            </select>
+
+            <select id="dsa-difficulty-filter" onchange="filterDsaProblems()">
+              <option value="all">All Difficulty</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
+            </select>
+
+            <select id="dsa-company-filter" onchange="filterDsaProblems()">
+              <option value="all">All Companies</option>
+              <option value="Amazon">Amazon</option>
+              <option value="Google">Google</option>
+              <option value="Microsoft">Microsoft</option>
+              <option value="Meta">Meta</option>
+            </select>
+          </div>
+
+          <!-- Problems Grid -->
+          <div id="dsa-problem-list" class="dsa-problem-grid"></div>
+
+          <div id="dsa-no-results" class="dsa-no-results" style="display:none;">
+            <div>🔎</div>
+            <h3>No problems found</h3>
+            <p>Try changing your search or filters.</p>
+          </div>
+
+        </section>
+
+
+        <!-- ==================================================================
+             VIEW 3: TOP TECH APPLICATIONS SUB-SCREEN
+             ================================================================== -->
+        <section id="view-applications" class="page-view hidden">
+          <div class="applications-layout">
+
+            <!-- Side Search & Prep Panel -->
+            <aside class="applications-side-panel">
+              <div class="applications-search-card">
+                <div class="applications-search-icon">🔍</div>
+                <h3>Quick Search</h3>
+                <p>Search companies, DSA topics, jobs and placement resources.</p>
+
+                <div class="applications-global-search">
+                  <input
+                    type="text"
+                    placeholder="Search Google, Amazon, DSA topics..."
+                    onkeyup="handleGlobalSearch(this.value)"
+                  >
+                </div>
+
+                <div class="applications-side-hint">
+                  <span>💡</span>
+                  <div>
+                    <strong>Quick tip</strong>
+                    <p>Search by company name, technology stack, or specific role.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Placement Preparation Card -->
+              <div class="applications-prep-card">
+                <div class="applications-prep-icon">🎯</div>
+                <h3>Placement Preparation</h3>
+                <p>Continue preparing with CareerNova's placement tools.</p>
+
+                <button onclick="switchView('dsa')">
+                  📚 DSA Practice
+                </button>
+
+                <button onclick="openMockInterviewModal()">
+                  🎤 Mock Interview
+                </button>
+
+                
+              </div>
+            </aside>
+
+            <!-- Main Applications Content -->
+            <div class="applications-main-content">
+              <div class="page-header">
+                <div>
+                  <div class="page-eyebrow">PLACEMENT PREPARATION</div>
+                  <h1 class="page-title">Top Tech Applications</h1>
+                  <p class="page-description">Explore companies, roles and the skills needed to prepare for their placement process.</p>
+                </div>
+              </div>
+
+              <!-- Search Toolbar -->
+              <div class="applications-toolbar">
+                <div class="application-search">
+                  <span>🔍</span>
+                  <input
+                    type="text"
+                    id="company-search"
+                    placeholder="Search companies, roles or skills..."
+                    oninput="filterCompanies()"
+                  >
+                </div>
+
+                <select id="company-category-filter" onchange="filterCompanies()">
+                  <option value="All">All Companies</option>
+                  <option value="Product">Product Companies</option>
+                  <option value="Service">Service Companies</option>
+                  <option value="AI">AI / ML</option>
+                </select>
+              </div>
+
+              <!-- Company Grid -->
+              <div class="company-grid" id="company-grid">
+
+                <!-- Google -->
+                <div class="company-card" data-company="Google" data-category="Product" data-search="google software engineer ai ml dsa python java">
+                  <div class="company-card-top">
+                    <div class="company-logo">G</div>
+                    <span class="company-category">Product</span>
+                  </div>
+                  <h2>Google</h2>
+                  <p class="company-description">Prepare for software engineering and AI/ML placement roles.</p>
+                  <div class="company-tags">
+                    <span>DSA</span>
+                    <span>Python</span>
+                    <span>Java</span>
+                    <span>System Design</span>
+                  </div>
+                  <div class="company-meta">
+                    <span>💼 Software Engineer</span>
+                    <span>🧠 DSA + Technical</span>
+                  </div>
+                  <button class="company-prepare-btn" onclick="openCompanyPreparation('Google')">
+                    Prepare for Google →
+                  </button>
+                </div>
+
+                <!-- Microsoft -->
+                <div class="company-card" data-company="Microsoft" data-category="Product" data-search="microsoft software engineer dsa c cpp java azure">
+                  <div class="company-card-top">
+                    <div class="company-logo">M</div>
+                    <span class="company-category">Product</span>
+                  </div>
+                  <h2>Microsoft</h2>
+                  <p class="company-description">Explore technical preparation for software and cloud roles.</p>
+                  <div class="company-tags">
+                    <span>DSA</span>
+                    <span>C++</span>
+                    <span>Java</span>
+                    <span>Azure</span>
+                  </div>
+                  <div class="company-meta">
+                    <span>💼 Software Engineer</span>
+                    <span>🧠 DSA + Technical</span>
+                  </div>
+                  <button class="company-prepare-btn" onclick="openCompanyPreparation('Microsoft')">
+                    Prepare for Microsoft →
+                  </button>
+                </div>
+
+                <!-- Amazon -->
+                <div class="company-card" data-company="Amazon" data-category="Product" data-search="amazon software development engineer dsa java python aws">
+                  <div class="company-card-top">
+                    <div class="company-logo">A</div>
+                    <span class="company-category">Product</span>
+                  </div>
+                  <h2>Amazon</h2>
+                  <p class="company-description">Prepare for SDE roles with DSA, coding and leadership principles.</p>
+                  <div class="company-tags">
+                    <span>DSA</span>
+                    <span>Java</span>
+                    <span>Python</span>
+                    <span>AWS</span>
+                  </div>
+                  <div class="company-meta">
+                    <span>💼 SDE</span>
+                    <span>🧠 Coding + Technical</span>
+                  </div>
+                  <button class="company-prepare-btn" onclick="openCompanyPreparation('Amazon')">
+                    Prepare for Amazon →
+                  </button>
+                </div>
+
+                <!-- Infosys -->
+                <div class="company-card" data-company="Infosys" data-category="Service" data-search="infosys software engineer java python sql aptitude">
+                  <div class="company-card-top">
+                    <div class="company-logo">I</div>
+                    <span class="company-category">Service</span>
+                  </div>
+                  <h2>Infosys</h2>
+                  <p class="company-description">Prepare for campus hiring with aptitude, coding and technical rounds.</p>
+                  <div class="company-tags">
+                    <span>Java</span>
+                    <span>SQL</span>
+                    <span>Aptitude</span>
+                    <span>DSA</span>
+                  </div>
+                  <div class="company-meta">
+                    <span>💼 Software Engineer</span>
+                    <span>🧠 Aptitude + Technical</span>
+                  </div>
+                  <button class="company-prepare-btn" onclick="openCompanyPreparation('Infosys')">
+                    Prepare for Infosys →
+                  </button>
+                </div>
+
+                <!-- TCS -->
+                <div class="company-card" data-company="TCS" data-category="Service" data-search="tcs ninja digital prime java python sql aptitude">
+                  <div class="company-card-top">
+                    <div class="company-logo">T</div>
+                    <span class="company-category">Service</span>
+                  </div>
+                  <h2>TCS</h2>
+                  <p class="company-description">Prepare for TCS campus recruitment with coding and aptitude practice.</p>
+                  <div class="company-tags">
+                    <span>Java</span>
+                    <span>Python</span>
+                    <span>SQL</span>
+                    <span>Aptitude</span>
+                  </div>
+                  <div class="company-meta">
+                    <span>💼 Graduate Roles</span>
+                    <span>🧠 Coding + Aptitude</span>
+                  </div>
+                  <button class="company-prepare-btn" onclick="openCompanyPreparation('TCS')">
+                    Prepare for TCS →
+                  </button>
+                </div>
+
+                <!-- NVIDIA -->
+                <div class="company-card" data-company="NVIDIA" data-category="AI" data-search="nvidia ai ml software engineer cuda c cpp python">
+                  <div class="company-card-top">
+                    <div class="company-logo">N</div>
+                    <span class="company-category">AI / ML</span>
+                  </div>
+                  <h2>NVIDIA</h2>
+                  <p class="company-description">Prepare for software, AI and high-performance computing roles.</p>
+                  <div class="company-tags">
+                    <span>C++</span>
+                    <span>Python</span>
+                    <span>AI/ML</span>
+                    <span>CUDA</span>
+                  </div>
+                  <div class="company-meta">
+                    <span>💼 AI / Software</span>
+                    <span>🧠 Technical + DSA</span>
+                  </div>
+                  <button class="company-prepare-btn" onclick="openCompanyPreparation('NVIDIA')">
+                    Prepare for NVIDIA →
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==================================================================
+             VIEW 4: HACKATHONS SUB-SCREEN
+             ================================================================== -->
+        <section id="view-hackathons" class="page-view hidden">
+          <div class="page-header" style="margin-bottom: 20px;">
+            <div>
+              <h1 class="page-title">Placement Hackathons & Corporate Sprints</h1>
+              <p class="page-description">Participate in corporate-sponsored challenges offering direct placement fast-tracks, cash bounties, and PPIs.</p>
+            </div>
+          </div>
+
+          <!-- Highlight Metric Counters -->
+          <div class="hackathons-stats-bar">
+            <div class="hackathon-stat-card">
+              <div class="stat-icon-wrap icon-blue">🏆</div>
+              <div class="stat-meta">
+                <div class="stat-val">8 Drives</div>
+                <div class="stat-lbl">Active Challenges</div>
+              </div>
+            </div>
+            <div class="hackathon-stat-card">
+              <div class="stat-icon-wrap icon-amber">💰</div>
+              <div class="stat-meta">
+                <div class="stat-val">₹58+ Lakhs</div>
+                <div class="stat-lbl">Total Cash Bounties</div>
+              </div>
+            </div>
+            <div class="hackathon-stat-card">
+              <div class="stat-icon-wrap icon-purple">🚀</div>
+              <div class="stat-meta">
+                <div class="stat-val">6 Drives</div>
+                <div class="stat-lbl">Direct PPI Fast-Tracks</div>
+              </div>
+            </div>
+            <div class="hackathon-stat-card">
+              <div class="stat-icon-wrap icon-emerald">👥</div>
+              <div class="stat-meta">
+                <div class="stat-val" id="hackathon-registered-count-badge">0</div>
+                <div class="stat-lbl">My Registered Drives</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Controls Card: Search + Quick Pills + Filters -->
+          <div class="hackathons-controls-card">
+            <!-- Search Bar Row -->
+            <div class="hackathon-search-row">
+              <div class="hackathon-search-box">
+                <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input 
+                  type="text" 
+                  id="hackathon-search" 
+                  class="hackathon-search-input" 
+                  placeholder="Search hackathons, organizers, topics, prizes, eligibility..." 
+                  oninput="filterHackathons()"
+                >
+                <button id="hackathon-search-clear" class="search-clear-btn" onclick="clearHackathonSearch()" title="Clear search">&times;</button>
+              </div>
+            </div>
+
+            <!-- Quick Filter Pills -->
+            <div class="hackathon-quick-pills">
+              <button class="hackathon-quick-pill active" data-filter="all" onclick="setHackathonQuickFilter('all', this)">⚡ All Challenges</button>
+              <button class="hackathon-quick-pill" data-filter="closing-soon" onclick="setHackathonQuickFilter('closing-soon', this)">🔥 Closing Soon</button>
+              <button class="hackathon-quick-pill" data-filter="online" onclick="setHackathonQuickFilter('online', this)">💻 Online Only</button>
+              <button class="hackathon-quick-pill" data-filter="offline" onclick="setHackathonQuickFilter('offline', this)">🏢 Offline & Hybrid</button>
+              <button class="hackathon-quick-pill" data-filter="high-prize" onclick="setHackathonQuickFilter('high-prize', this)">🏆 High Prize (≥ ₹5L)</button>
+              <button class="hackathon-quick-pill" data-filter="registered" onclick="setHackathonQuickFilter('registered', this)">✅ My Registrations</button>
+            </div>
+
+            <!-- Dropdown Filter Bar -->
+            <div class="filter-bar" style="margin-bottom: 0; padding-bottom: 0;">
+              <div class="filter-group">
+                <span class="filter-label">Status:</span>
+                <select class="select-input" id="hackathon-status-filter" onchange="filterHackathons()">
+                  <option value="All">All Statuses</option>
+                  <option value="Upcoming">Upcoming</option>
+                  <option value="Closing Soon">Closing Soon</option>
+                  <option value="Closed">Closed</option>
+                  <option value="Registered">My Registered</option>
+                </select>
+
+                <span class="filter-label" style="margin-left: 12px;">Category:</span>
+                <select class="select-input" id="hackathon-cat-filter" onchange="filterHackathons()">
+                  <option value="All">All Categories</option>
+                  <option value="AI & ML">AI & ML</option>
+                  <option value="Web Development">Web Development</option>
+                  <option value="App Development">App Development</option>
+                  <option value="Cybersecurity">Cybersecurity</option>
+                  <option value="Systems & Infra">Systems & Infra</option>
+                  <option value="Blockchain">Blockchain</option>
+                  <option value="IoT">IoT</option>
+                  <option value="Open Innovation">Open Innovation</option>
+                  <option value="Other">Other</option>
+                </select>
+
+                <span class="filter-label" style="margin-left: 12px;">Mode:</span>
+                <select class="select-input" id="hackathon-mode-filter" onchange="filterHackathons()">
+                  <option value="All">All Modes</option>
+                  <option value="Online">Online</option>
+                  <option value="Offline">Offline</option>
+                  <option value="Hybrid">Hybrid</option>
+                </select>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <strong style="font-size: 13px; font-weight: 700; color: var(--text-main);">
+                  Showing <strong id="hackathon-count">8</strong> hackathons
+                </strong>
+                <button class="btn-secondary" style="padding: 6px 12px; font-size: 12px; white-space: nowrap;" onclick="clearHackathonFilters()">Clear Filters</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hackathons List Grid -->
+          <div class="list-grid" id="hackathons-grid">
+            
+            <!-- Card 1: Smart India Hackathon -->
+            <div class="item-card" 
+                 id="hackathon-card-sih" 
+                 data-id="sih-2026" 
+                 data-status="Upcoming" 
+                 data-cat="Open Innovation" 
+                 data-mode="Online" 
+                 data-prize="100000" 
+                 data-registered="false"
+                 data-search="smart india hackathon government of india aicte moe open innovation sih">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">🔥 Smart India Hackathon 2026</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Government of India (MoE & AICTE)</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-navy">Upcoming</span>
+                    <span class="deadline-pill">⏰ 12 Oct 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  World's biggest open innovation hackathon crowdsourcing solutions for 50+ central ministries. Top teams receive direct placement fast-tracks, incubations, and cash prizes.
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Government of India</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-online">Online</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">Open Innovation</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">12 Oct 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">All College Undergrads & Postgrads (AICTE/UGC)</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹1,00,000 Prize</div>
+                      <div class="prize-sub">Per Theme • ₹1 Cr Pool + Ministry PPIs</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 3–6 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#SmartIndia</span>
+                  <span class="tag">#GovtOfIndia</span>
+                  <span class="tag">#AICTE</span>
+                  <span class="tag">#PlacementFastTrack</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Registration closes 12 Oct 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('sih-2026')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('sih-2026')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2: Flipkart GRiD 7.0 -->
+            <div class="item-card" 
+                 id="hackathon-card-flipkart" 
+                 data-id="flipkart-grid-7" 
+                 data-status="Closing Soon" 
+                 data-cat="Web Development" 
+                 data-mode="Online" 
+                 data-prize="500000" 
+                 data-registered="false"
+                 data-search="flipkart grid sde sprint e-commerce ppi 32 lpa web development algorithms">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">⚡ Flipkart GRiD 7.0 - SDE Sprint</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Flipkart</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-orange">Closing Soon</span>
+                    <span class="deadline-pill">⏰ 18 Oct 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  Flagship campus challenge testing high-scale distributed commerce, inventory locks, and microservices. Finalists secure direct Pre-Placement Interviews (₹32 LPA CTC).
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Flipkart</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-online">Online</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">Web Development</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">18 Oct 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">B.Tech / BE / M.Tech / MCA (Batch of 2026 & 2027)</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹5,00,000 Prize</div>
+                      <div class="prize-sub">+ Direct SDE PPIs (₹32 LPA CTC)</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 1–3 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#Flipkart</span>
+                  <span class="tag">#SDE</span>
+                  <span class="tag">#WebDev</span>
+                  <span class="tag">#32LPAPPI</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Deadline: 18 Oct 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('flipkart-grid-7')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('flipkart-grid-7')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3: Google Cloud GenAI Challenge -->
+            <div class="item-card" 
+                 id="hackathon-card-google" 
+                 data-id="google-genai-2026" 
+                 data-status="Upcoming" 
+                 data-cat="AI & ML" 
+                 data-mode="Online" 
+                 data-prize="1650000" 
+                 data-registered="false"
+                 data-search="google cloud genai gemini vertex ai machine learning deep learning agents python">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">🤖 Google Cloud GenAI Challenge</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Google Cloud</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-navy">Upcoming</span>
+                    <span class="deadline-pill">⏰ 30 Oct 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  Build multimodal generative AI agents and intelligent search assistants powered by Gemini 1.5 Pro and Vertex AI. Direct Google recruiter review and cloud credits.
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Google Cloud</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-online">Online</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">AI & ML</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">30 Oct 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">All Engineering, BCA/MCA & CS Undergrads / Grads</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹16,50,000 Prize</div>
+                      <div class="prize-sub">($20,000 Pool) + $2k Cloud Credits</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 1–4 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#GoogleCloud</span>
+                  <span class="tag">#GeminiAI</span>
+                  <span class="tag">#VertexAI</span>
+                  <span class="tag">#FastTrack</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Deadline: 30 Oct 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('google-genai-2026')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('google-genai-2026')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4: TCS HackQuest Season 10 -->
+            <div class="item-card" 
+                 id="hackathon-card-tcs" 
+                 data-id="tcs-hackquest-10" 
+                 data-status="Upcoming" 
+                 data-cat="Cybersecurity" 
+                 data-mode="Online" 
+                 data-prize="500000" 
+                 data-registered="false"
+                 data-search="tcs hackquest tata consultancy services cybersecurity ctf prime digital 9 lpa ethical hacking">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">🛡️ TCS HackQuest Season 10</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Tata Consultancy Services</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-navy">Upcoming</span>
+                    <span class="deadline-pill">⏰ 05 Nov 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  National cybersecurity Capture-The-Flag (CTF) tournament covering web pentesting, cryptography, and reverse engineering. Direct job offers for TCS Prime (9 LPA) and Digital (7 LPA).
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Tata Consultancy Services</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-online">Online</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">Cybersecurity</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">05 Nov 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">B.E / B.Tech / M.E / M.Tech / MCA (2026 & 2027 Batches)</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹5,00,000 Prize</div>
+                      <div class="prize-sub">+ Direct TCS Prime (9 LPA) & Digital Offers</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 1 Member (Solo)</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#Cybersecurity</span>
+                  <span class="tag">#CTF</span>
+                  <span class="tag">#TCSPrime</span>
+                  <span class="tag">#JobOffers</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Deadline: 05 Nov 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('tcs-hackquest-10')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('tcs-hackquest-10')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 5: Distributed Systems Sprint -->
+            <div class="item-card" 
+                 id="hackathon-card-cloudflare" 
+                 data-id="cloudflare-systems-2026" 
+                 data-status="Closing Soon" 
+                 data-cat="Systems & Infra" 
+                 data-mode="Hybrid" 
+                 data-prize="1250000" 
+                 data-registered="false"
+                 data-search="cloudflare distributed systems sprint edge caching proxy webassembly infrastructure high throughput">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">🌐 Distributed Systems Sprint</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Cloudflare</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-orange">Closing Soon</span>
+                    <span class="deadline-pill">⏰ 25 Oct 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  Design high-throughput edge caching layers handling 100k req/sec with under 5ms latency. Judged directly by Cloudflare Principal Engineers with interview bypass passes for top teams.
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Cloudflare</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-hybrid">Hybrid</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">Systems & Infra</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">25 Oct 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">Pre-final & Final Year CS / IT / Software Eng.</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹12,50,000 Prize</div>
+                      <div class="prize-sub">($15,000 Pool) + Principal Engineer Bypass</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 2–4 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#Cloudflare</span>
+                  <span class="tag">#DistributedSystems</span>
+                  <span class="tag">#SystemsInfra</span>
+                  <span class="tag">#EdgeComputing</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Deadline: 25 Oct 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('cloudflare-systems-2026')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('cloudflare-systems-2026')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 6: AWS Mobile Sprint -->
+            <div class="item-card" 
+                 id="hackathon-card-aws" 
+                 data-id="aws-mobile-sprint" 
+                 data-status="Upcoming" 
+                 data-cat="App Development" 
+                 data-mode="Online" 
+                 data-prize="350000" 
+                 data-registered="false"
+                 data-search="amazon aws mobile sprint flutter react native amplify appsync graphql app development">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">📱 AWS Mobile & Serverless Sprint</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Amazon Web Services</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-navy">Upcoming</span>
+                    <span class="deadline-pill">⏰ 15 Nov 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  Build responsive mobile applications with Flutter/React Native backed by AWS Amplify and GraphQL. Winners receive AWS Certification exam vouchers and Amazon recruiter outreach.
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Amazon Web Services</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-online">Online</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">App Development</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">15 Nov 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">All College & University Students (All Branches)</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹3,50,000 Prize</div>
+                      <div class="prize-sub">+ AWS Certification Vouchers & Goodies</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 1–4 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#AWS</span>
+                  <span class="tag">#AppDevelopment</span>
+                  <span class="tag">#Flutter</span>
+                  <span class="tag">#Amplify</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Deadline: 15 Nov 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('aws-mobile-sprint')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('aws-mobile-sprint')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 7: Polygon Web3 Marathon -->
+            <div class="item-card" 
+                 id="hackathon-card-polygon" 
+                 data-id="polygon-web3-marathon" 
+                 data-status="Closing Soon" 
+                 data-cat="Blockchain" 
+                 data-mode="Offline" 
+                 data-prize="2000000" 
+                 data-registered="false"
+                 data-search="polygon web3 buidl marathon blockchain ethereum solidity defi zero knowledge offline bengaluru">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">⛓️ Polygon Web3 BUIDL Marathon</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Polygon Labs</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-orange">Closing Soon</span>
+                    <span class="deadline-pill">⏰ 22 Oct 2026</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  36-hour physical hackathon hosted at Bengaluru tech hub. Build zero-knowledge proofs, DeFi protocols, and decentralized apps. Direct angel mentorship and VC seed grant tracks.
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Polygon Labs</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-offline">Offline</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">Blockchain</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value">22 Oct 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">Open to All Undergraduates & Web3 Devs</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount">₹20,00,000 Prize</div>
+                      <div class="prize-sub">($25,000 Bounty Pool) + VC Seed Grants</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 2–4 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#Polygon</span>
+                  <span class="tag">#Web3</span>
+                  <span class="tag">#Blockchain</span>
+                  <span class="tag">#Bengaluru</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>⏳ Deadline: 22 Oct 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('polygon-web3-marathon')">Details</button>
+                  <button class="btn-primary btn-sm register-btn" onclick="openHackathonRegister('polygon-web3-marathon')">Register Now ↗</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 8: Intel Edge AI & IoT Sprint -->
+            <div class="item-card" 
+                 id="hackathon-card-intel" 
+                 data-id="intel-edge-iot" 
+                 data-status="Closed" 
+                 data-cat="IoT" 
+                 data-mode="Offline" 
+                 data-prize="200000" 
+                 data-registered="false"
+                 data-search="intel edge ai iot sprint robotics openvino computer vision embedded hardware offline hyderabad">
+              <div>
+                <div class="item-header">
+                  <div class="hackathon-title-group">
+                    <h3 class="item-title hackathon-title">⚙️ Intel Edge AI & IoT Sprint</h3>
+                    <div class="item-subtitle hackathon-org">🏢 Organizer: Intel Corporation</div>
+                  </div>
+                  <div class="hackathon-badges-group">
+                    <span class="badge badge-gray">Registration Closed</span>
+                    <span class="deadline-pill" style="background-color: var(--bg-sidebar); color: var(--text-muted); border-color: var(--border-color);">Closed 15 Sep</span>
+                  </div>
+                </div>
+
+                <div class="item-body hackathon-desc">
+                  On-device deep learning inference and edge robotics hardware hackathon using Intel OpenVINO. Registration has closed; university finalists are demoing hardware at Intel campus.
+                </div>
+
+                <div class="hackathon-details-grid">
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🏢 Organizer</span>
+                    <span class="detail-value">Intel Corporation</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">🌐 Mode</span>
+                    <span class="detail-value"><span class="mode-badge mode-offline">Offline</span></span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">📂 Category</span>
+                    <span class="detail-value">IoT</span>
+                  </div>
+                  <div class="hackathon-detail-item">
+                    <span class="detail-label">⏰ Deadline</span>
+                    <span class="detail-value deadline-value" style="color: var(--text-muted);">15 Sep 2026</span>
+                  </div>
+                  <div class="hackathon-detail-item full-width">
+                    <span class="detail-label">🎓 Eligibility</span>
+                    <span class="detail-value">3rd & 4th Year ECE / EEE / CSE / IT Students</span>
+                  </div>
+                </div>
+
+                <div class="hackathon-prize-banner" style="background: var(--bg-sidebar); border-color: var(--border-color);">
+                  <div class="prize-info-left">
+                    <span class="prize-icon">🏆</span>
+                    <div>
+                      <div class="prize-amount" style="color: var(--text-main);">₹2,00,000 Prize</div>
+                      <div class="prize-sub" style="color: var(--text-muted);">+ Intel OpenVINO Dev Kits & Fast-Tracks</div>
+                    </div>
+                  </div>
+                  <span class="team-badge">👥 2–3 / Team</span>
+                </div>
+
+                <div class="item-tags hackathon-tags">
+                  <span class="tag">#Intel</span>
+                  <span class="tag">#IoT</span>
+                  <span class="tag">#EdgeAI</span>
+                  <span class="tag">#OpenVINO</span>
+                </div>
+              </div>
+
+              <div class="item-footer">
+                <div class="item-meta-text">
+                  <span>🔒 Closed on 15 Sep 2026</span>
+                </div>
+                <div class="card-actions">
+                  <button class="btn-secondary btn-sm" onclick="openHackathonModal('intel-edge-iot')">Details</button>
+                  <button class="btn-secondary btn-sm register-btn" disabled style="opacity: 0.65; cursor: not-allowed;">Registration Closed</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State Fallback -->
+            <div id="hackathon-empty-state" class="hackathon-empty-state" style="display: none;">
+              <div class="empty-state-icon">🔍</div>
+              <h3 class="empty-state-title">No hackathons found</h3>
+              <p class="empty-state-desc">We couldn't find any challenges matching your current search terms and filter selections. Try adjusting keywords or resetting filters.</p>
+              <button class="btn-primary btn-sm" onclick="clearHackathonFilters()">Reset All Filters</button>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 5: NOVA AI CHATBOT 
+             ================================================================== -->
+        <section id="view-aichat" class="page-view hidden">
+          <div class="page-header" style="margin-bottom: 20px;">
+            <div>
+              <h1 class="page-title">Nova AI Assistant ✨</h1>
+              <p class="page-description"> Chat, write code, debug errors, solve DSA, or brainstorm.</p>
+            </div>
+          </div>
+
+          <div class="chat-wrapper">
+            <div class="chat-header">
+              <div class="chat-brand-meta">
+                <div class="chat-brand-icon">✨</div>
+                <div class="chat-title-group">
+                  <strong>Nova AI</strong>
+                  <div class="chat-status-subtext" id="coach-mode-indicator">
+                    Nova AI • Live Web Search Active
+                  </div>
+                </div>
+              </div>
+              <div class="chat-header-actions">
+                <button class="chat-btn-pill" onclick="resetChatSession()" title="Start a fresh conversation">
+                  ➕ New Chat
+                </button>
+                <button class="chat-btn-pill" onclick="openAiSettingsModal()" title="Connect your Gemini API Key">
+                  ⚙️ AI Settings
+                </button>
+                <span class="badge badge-green" id="coach-status-badge">Web Online</span>
+              </div>
+            </div>
+
+            <div class="chat-messages" id="chat-box">
+              <div class="chat-empty-state" id="chat-empty-state">
+                <div class="chat-welcome-sparkle">✨</div>
+                <h2 class="chat-welcome-title">Where shall we begin today?</h2>
+                <p class="chat-welcome-desc">Ask any question, write & debug code, solve algorithms, prepare for interviews, or explore live web knowledge.</p>
+
+                <div class="chat-prompt-grid">
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('Implement a Trie (Prefix Tree) in Python with insert and search methods, including complexity analysis.')">
+                    <div class="chat-prompt-card-header">💻 Write Code & Algorithms</div>
+                    <div class="chat-prompt-card-desc">Implement a Trie with insert and search methods + Big-O analysis.</div>
+                  </div>
+
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('Explain the system design of a distributed Rate Limiter using Token Bucket and Redis.')">
+                    <div class="chat-prompt-card-header">🏗️ System Design Blueprint</div>
+                    <div class="chat-prompt-card-desc">Explore rate limiters with token buckets, API gateways, and Redis.</div>
+                  </div>
+
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('Give me a high-impact STAR framework response for: Tell me about a time you handled a difficult production bug.')">
+                    <div class="chat-prompt-card-header">🎤 STAR Behavioral Prep</div>
+                    <div class="chat-prompt-card-desc">Structure answers for handling tight deadlines and production bugs.</div>
+                  </div>
+
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('What are the core trade-offs between SQL and NoSQL databases for high-scale microservices?')">
+                    <div class="chat-prompt-card-header">🗄️ SQL vs NoSQL Trade-offs</div>
+                    <div class="chat-prompt-card-desc">Compare ACID relational databases vs horizontal NoSQL clusters.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="chat-input-area">
+              <div class="chat-input-box">
+                <textarea 
+                  id="chat-input" 
+                  class="chat-textarea" 
+                  rows="1" 
+                  placeholder="Message Nova AI... (Press Enter to send, Shift+Enter for new line)"
+                  oninput="handleChatInputInput(event)"
+                  onkeydown="handleChatInputKeyDown(event)"></textarea>
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()" title="Send Message">
+                  ➤
+                </button>
+              </div>
+              <div class="chat-footer-disclaimer">
+                Nova AI can answer questions across coding, system design, and general topics using Generative AI & Live Web Search.
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ==================================================================
+             VIEW 6: JOBS SUB-SCREEN
+             ================================================================== -->
+        <section id="view-jobs" class="page-view hidden">
+          <div class="page-header" style="margin-bottom: 24px;">
+            <div>
+              <h1 class="page-title">Verified Job Postings</h1>
+              <p class="page-description">Direct placement roles from partnered corporate recruiters hiring university graduates.</p>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">Role:</span>
+              <select class="select-input" id="job-role-filter" onchange="filterJobs()">
+                <option value="All">All Roles</option>
+                <option value="Frontend">Frontend Engineer</option>
+                <option value="Backend">Backend Engineer</option>
+                <option value="Fullstack">Fullstack Engineer</option>
+              </select>
+
+              <span class="filter-label" style="margin-left: 12px;">Type:</span>
+              <select class="select-input" id="job-type-filter" onchange="filterJobs()">
+                <option value="All">All Types</option>
+                <option value="Full-time">Full-time New Grad</option>
+                <option value="Internship">Internship</option>
+              </select>
+            </div>
+
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-main);">
+              Active postings: <strong id="job-count">2</strong>
+            </div>
+          </div>
+          
+          <div class="jobs-list" id="jobs-container">
+
+            <!-- GOOGLE JOB -->
+            <div
+              class="job-row"
+              data-role="Frontend"
+              data-type="Full-time"
+              data-company="Google"
+              data-location="Mountain View"
+            >
+              <div class="job-info" style="display: flex; align-items: center; gap: 16px;">
+                <div class="company-logo-placeholder">GO</div>
+                <div class="job-details">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div class="job-title-text">Frontend Engineer - University Graduate</div>
+                    <span class="verified-job-badge">✓ Verified</span>
+                  </div>
+                  <div class="job-company-location">Google • Mountain View, CA</div>
+                  <div class="job-extra-info">TypeScript / Angular • Full-time • New Grad</div>
+                </div>
+              </div>
+
+              <div class="job-actions">
+                <span class="badge badge-navy">Full-time</span>
+                <button class="save-job-btn" onclick="toggleSavedJob(this)" title="Save job">♡</button>
+                <button class="btn-primary" style="width:auto; padding:7px 16px;" onclick="window.open('https://www.google.com/about/careers/applications/jobs/results', '_blank')">
+                  Apply Now ↗
+                </button>
+              </div>
+            </div>
+
+            <!-- MICROSOFT JOB -->
+            <div
+              class="job-row"
+              data-role="Backend"
+              data-type="Full-time"
+              data-company="Microsoft"
+              data-location="Redmond"
+            >
+              <div class="job-info" style="display: flex; align-items: center; gap: 16px;">
+                <div class="company-logo-placeholder">MS</div>
+                <div class="job-details">
+                  <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div class="job-title-text">Software Engineering New Grad</div>
+                    <span class="verified-job-badge">✓ Verified</span>
+                  </div>
+                  <div class="job-company-location">Microsoft • Redmond, WA</div>
+                  <div class="job-extra-info">C# / Azure / Distributed Systems • Full-time • New Grad</div>
+                </div>
+              </div>
+
+              <div class="job-actions">
+                <span class="badge badge-navy">Full-time</span>
+                <button class="save-job-btn" onclick="toggleSavedJob(this)" title="Save job">♡</button>
+                <button class="btn-primary" style="width:auto; padding:7px 16px;" onclick="window.open('https://careers.microsoft.com/v2/global/en/home.html', '_blank')">
+                  Apply Now ↗
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+
+        <!-- ==================================================================
+             VIEW 7: COLLEGE TPO PLACEMENT PORTAL 🎓
+             ================================================================== -->
+        <section id="view-college" class="page-view hidden">
+          <div class="page-header" style="margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <h1 class="page-title">College Placement Tracking Portal (TPO Officer View) 🎓</h1>
+              <p class="page-description">Campus-wide placement statistics, candidate progress monitoring, and TPO metrics.</p>
+            </div>
+            <button class="btn-primary" style="width: auto;" onclick="exportTpoReport()">Export TPO Report PDF</button>
+          </div>
+
+          <div class="tpo-stat-grid">
+            <div class="tpo-stat-card">
+              <div class="tpo-stat-label">Total Eligible Students</div>
+              <div class="tpo-stat-val">1,250</div>
+              <div class="tpo-stat-sub">Batch 2026 Enrolled</div>
+            </div>
+
+            <div class="tpo-stat-card">
+              <div class="tpo-stat-label">Campus Placement Rate</div>
+              <div class="tpo-stat-val">68%</div>
+              <div class="tpo-stat-sub">↑ +12% vs last year</div>
+            </div>
+
+            <div class="tpo-stat-card">
+              <div class="tpo-stat-label">Average Salary Package</div>
+              <div class="tpo-stat-val">$120,000</div>
+              <div class="tpo-stat-sub">₹16 LPA Domestic Avg</div>
+            </div>
+
+            <div class="tpo-stat-card">
+              <div class="tpo-stat-label">Highest Package Offered</div>
+              <div class="tpo-stat-val">$210,000</div>
+              <div class="tpo-stat-sub">₹45 LPA (Google Off-Campus)</div>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">Filter Branch:</span>
+              <select class="select-input" id="tpo-branch-filter" onchange="filterTpoRoster()">
+                <option value="All">All Branches</option>
+                <option value="CS">Computer Science</option>
+                <option value="IT">Information Tech</option>
+                <option value="AI/DS">AI & Data Science</option>
+              </select>
+
+              <span class="filter-label" style="margin-left: 12px;">Placement Status:</span>
+              <select class="select-input" id="tpo-status-filter" onchange="filterTpoRoster()">
+                <option value="All">All Statuses</option>
+                <option value="Placed">Placed</option>
+                <option value="Interviewing">Interviewing</option>
+                <option value="Preparing">Preparing</option>
+              </select>
+            </div>
+
+            <div style="font-size: 13px; font-weight: 700; color: var(--text-main);">
+              Showing <strong id="tpo-student-count">3</strong> campus candidates
+            </div>
+          </div>
+
+          <div class="data-table-card">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Roll / ID No</th>
+                  <th>Student Name</th>
+                  <th>Branch & Year</th>
+                  <th>Readiness Score</th>
+                  <th>DSA Solved</th>
+                  <th>Applications</th>
+                  <th>Placement Status</th>
+                </tr>
+              </thead>
+              <tbody id="tpo-table-body">
+                <tr data-branch="CS" data-status="Interviewing">
+                  <td><code>SU-2026-042</code></td>
+                  <td><strong>Alex Wright</strong></td>
+                  <td>CS Senior '26</td>
+                  <td><span class="badge badge-navy">Baseline Diagnostic</span></td>
+                  <td>0 / 10</td>
+                  <td>1 App (Google)</td>
+                  <td><span class="badge badge-orange">Interviewing @ Google</span></td>
+                </tr>
+
+                <tr data-branch="CS" data-status="Placed">
+                  <td><code>SU-2026-015</code></td>
+                  <td><strong>Sophia Chen</strong></td>
+                  <td>CS Senior '26</td>
+                  <td><span class="badge badge-green">94% (Tier 1)</span></td>
+                  <td>10 / 10</td>
+                  <td>5 Apps</td>
+                  <td><span class="badge badge-green">Placed @ Microsoft ($148k)</span></td>
+                </tr>
+
+                <tr data-branch="IT" data-status="Placed">
+                  <td><code>SU-2026-088</code></td>
+                  <td><strong>Rohan Sharma</strong></td>
+                  <td>Information Tech '26</td>
+                  <td><span class="badge badge-green">91% (Tier 1)</span></td>
+                  <td>9 / 10</td>
+                  <td>4 Apps</td>
+                  <td><span class="badge badge-green">Placed @ Amazon ($150k)</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- ==========================================================================
+       8. MODALS & TOAST NOTIFICATION
+       ========================================================================== -->
+
+  <!-- DSA PROBLEM MODAL (Now cleanly inside body) -->
+  <div id="dsa-problem-modal" class="dsa-modal-overlay" style="display:none;">
+    <div class="dsa-modal">
+      <div class="dsa-modal-header">
+        <div>
+          <span id="modal-dsa-difficulty" class="dsa-badge easy">Easy</span>
+          <h2 id="modal-dsa-title">Problem Title</h2>
+          <div id="modal-dsa-topic" class="dsa-problem-topic">Array</div>
+        </div>
+        <button class="dsa-modal-close" onclick="closeDsaProblem()">×</button>
+      </div>
+
+      <div class="dsa-modal-companies" id="modal-dsa-companies"></div>
+
+      <div class="dsa-modal-content">
+        <h3>Problem</h3>
+        <p id="modal-dsa-description"></p>
+
+        <h3>Example</h3>
+        <pre id="modal-dsa-example"></pre>
+
+        <div class="dsa-hint-box">
+          <strong>💡 Hint</strong>
+          <p id="modal-dsa-hint"></p>
+        </div>
+      </div>
+
+      <div class="dsa-modal-actions">
+        <button class="leetcode-btn" id="modal-leetcode-btn">
+          Solve on LeetCode ↗
+        </button>
+        <button class="complete-dsa-btn" id="modal-complete-btn">
+          Mark Completed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOCK INTERVIEW CONFIGURATION MODAL -->
+  <div id="mock-interview-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog mock-config-dialog">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">🎤 Mock Interview</h3>
+          <p class="mock-subtitle">Practice realistic placement questions and evaluate your preparation.</p>
+        </div>
+        <button class="btn-icon-ghost" onclick="closeMockInterviewModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Interview Type</label>
+          <div class="interview-type-grid">
+            <button class="interview-type-card selected" data-type="technical" onclick="selectInterviewType('technical', this)">
+              <span class="interview-type-icon">💻</span>
+              <strong>Technical</strong>
+              <small>CS fundamentals & programming</small>
+            </button>
+
+            <button class="interview-type-card" data-type="hr" onclick="selectInterviewType('hr', this)">
+              <span class="interview-type-icon">🗣️</span>
+              <strong>HR / Behavioral</strong>
+              <small>Communication & personality</small>
+            </button>
+
+            <button class="interview-type-card" data-type="dsa" onclick="selectInterviewType('dsa', this)">
+              <span class="interview-type-icon">🧩</span>
+              <strong>DSA</strong>
+              <small>Algorithms & problem solving</small>
+            </button>
+
+            <button class="interview-type-card" data-type="company" onclick="selectInterviewType('company', this)">
+              <span class="interview-type-icon">🏢</span>
+              <strong>Company</strong>
+              <small>Company-style questions</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Target Track</label>
+          <select id="interview-track" class="select-input" style="width: 100%;">
+            <option>Software Engineering — Frontend & Web Systems</option>
+            <option>Software Engineering — Backend & Distributed Systems</option>
+            <option>Fullstack Software Engineering</option>
+            <option>Artificial Intelligence & Machine Learning</option>
+            <option>Data Science</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Difficulty</label>
+          <select id="interview-difficulty" class="select-input" style="width: 100%;">
+            <option value="easy">Beginner</option>
+            <option value="medium" selected>Intermediate</option>
+            <option value="hard">Advanced</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Number of Questions</label>
+          <select id="interview-question-count" class="select-input" style="width: 100%;">
+            <option value="5">5 Questions — Quick Practice</option>
+            <option value="10" selected>10 Questions — Standard Interview</option>
+            <option value="15">15 Questions — Full Session</option>
+          </select>
+        </div>
+
+        <div class="mock-info-box">
+          <span>ℹ️</span>
+          <div>
+            <strong>How it works</strong>
+            <p>CareerNova will ask questions one at a time. Answer each question and receive a performance summary at the end of your session.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeMockInterviewModal()">Cancel</button>
+        <button class="btn-primary" style="width: auto;" onclick="startMockSession()">Start Interview →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTIVE MOCK INTERVIEW SESSION MODAL -->
+  <div id="mock-session-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog mock-session-dialog">
+      <div class="modal-header">
+        <div>
+          <span class="mock-session-label">MOCK INTERVIEW</span>
+          <h3 class="modal-title" id="mock-question-number">Question 1 of 10</h3>
+        </div>
+        <button class="btn-icon-ghost" onclick="exitMockSession()">✕</button>
+      </div>
+
+      <div class="mock-session-progress">
+        <div id="mock-progress-bar" class="mock-session-progress-fill"></div>
+      </div>
+
+      <div class="modal-body">
+        <div class="mock-question-meta">
+          <span id="mock-question-type">Technical</span>
+          <span id="mock-question-difficulty">Intermediate</span>
+        </div>
+
+        <div class="mock-question-card">
+          <h2 id="mock-question-text">Loading question...</h2>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Answer</label>
+          <textarea id="mock-answer" class="mock-answer-input" placeholder="Type your answer here..." rows="7"></textarea>
+          <div class="mock-answer-hint">
+            Try to explain your reasoning clearly. For technical questions, mention complexity and trade-offs where appropriate.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <span id="mock-question-counter" class="mock-counter">1 / 10</span>
+        <button class="btn-primary" style="width:auto;" onclick="submitMockAnswer()">Submit Answer →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MOCK INTERVIEW RESULTS MODAL -->
+  <div id="mock-results-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog mock-results-dialog">
+      <div class="modal-header">
+        <div>
+          <span class="mock-session-label">INTERVIEW COMPLETE</span>
+          <h3 class="modal-title">Your Interview Report</h3>
+        </div>
+        <button class="btn-icon-ghost" onclick="closeMockResults()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mock-score-card">
+          <div class="mock-score-circle">
+            <span id="mock-final-score">0</span>
+            <small>/100</small>
+          </div>
+          <div>
+            <h3 id="mock-result-title">Interview Completed</h3>
+            <p id="mock-result-summary">Your performance summary will appear here.</p>
+          </div>
+        </div>
+
+        <div class="mock-result-grid">
+          <div class="mock-result-item">
+            <span>🎯</span>
+            <strong id="mock-accuracy-score">0%</strong>
+            <small>Technical Accuracy</small>
+          </div>
+
+          <div class="mock-result-item">
+            <span>💬</span>
+            <strong id="mock-communication-score">0%</strong>
+            <small>Communication</small>
+          </div>
+
+          <div class="mock-result-item">
+            <span>🧠</span>
+            <strong id="mock-completeness-score">0%</strong>
+            <small>Completeness</small>
+          </div>
+        </div>
+
+        <div class="mock-feedback-section">
+          <h3>What went well</h3>
+          <ul id="mock-strengths"></ul>
+        </div>
+
+        <div class="mock-feedback-section">
+          <h3>Areas to improve</h3>
+          <ul id="mock-improvements"></ul>
+        </div>
+
+        <div class="mock-feedback-section">
+          <h3>Recommended Next Steps</h3>
+          <p id="mock-next-steps"></p>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeMockResults()">Close</button>
+        <button class="btn-primary" style="width:auto;" onclick="restartMockInterview()">Practice Again →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY PREPARATION MODAL -->
+  <div id="company-prep-modal" class="company-prep-overlay hidden">
+    <div class="company-prep-modal">
+      <div class="company-prep-header">
+        <div>
+          <span class="page-eyebrow">COMPANY PREPARATION</span>
+          <h2 id="prep-company-name">Company</h2>
+          <p id="prep-company-role">Software Engineering Roles</p>
+        </div>
+        <button class="company-prep-close" onclick="closeCompanyPreparation()">×</button>
+      </div>
+
+      <div class="prep-overview">
+        <div class="prep-overview-card">
+          <span>💼</span>
+          <div>
+            <small>Target Roles</small>
+            <strong id="prep-roles">Software Engineer</strong>
+          </div>
+        </div>
+
+        <div class="prep-overview-card">
+          <span>🧠</span>
+          <div>
+            <small>Difficulty</small>
+            <strong id="prep-difficulty">Medium</strong>
+          </div>
+        </div>
+
+        <div class="prep-overview-card">
+          <span>🎤</span>
+          <div>
+            <small>Interview Rounds</small>
+            <strong id="prep-rounds">Technical + HR</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="prep-section">
+        <div class="prep-section-title">
+          <span>🧠</span>
+          <div>
+            <h3>Required Skills</h3>
+            <p>Focus areas for your preparation</p>
+          </div>
+        </div>
+        <div id="prep-skills" class="prep-tags"></div>
+      </div>
+
+      <div class="prep-section">
+        <div class="prep-section-title">
+          <span>📚</span>
+          <div>
+            <h3>DSA Topics</h3>
+            <p>Topics commonly relevant to technical preparation</p>
+          </div>
+        </div>
+        <div id="prep-dsa" class="prep-tags"></div>
+      </div>
+
+      <div class="prep-section">
+        <div class="prep-section-title">
+          <span>🎤</span>
+          <div>
+            <h3>Practice Questions</h3>
+            <p>Questions to help you prepare</p>
+          </div>
+        </div>
+        <div id="prep-questions" class="prep-questions"></div>
+      </div>
+
+      <div class="prep-section">
+        <div class="prep-section-title">
+          <span>✅</span>
+          <div>
+            <h3>Preparation Checklist</h3>
+            <p>Track the areas you have prepared</p>
+          </div>
+        </div>
+        <div id="prep-checklist" class="prep-checklist"></div>
+      </div>
+
+      <div class="prep-actions">
+        <button class="prep-secondary-btn" onclick="closeCompanyPreparation()">Close</button>
+        <button class="prep-primary-btn" id="prep-opportunity-btn">🔗 View Opportunities</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI SETTINGS MODAL -->
+  <div id="ai-settings-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">⚙️ AI Chatbot Settings</h3>
+          <p class="mock-subtitle">Connect Google Gemini to answer any complex coding, system design, or interview question.</p>
+        </div>
+        <button class="btn-icon-ghost" onclick="closeAiSettingsModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="gemini-api-key-input">Google Gemini API Key</label>
+          <input type="password" id="gemini-api-key-input" class="form-input" placeholder="AIzaSy...">
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
+            🔑 <strong>Get a free key:</strong> Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary-accent); text-decoration: underline;">Google AI Studio</a> (free tier, no credit card required).
+            <br>
+            🌐 <strong>Default mode:</strong> If no key is set, the chatbot automatically uses <strong>Live Web Search</strong> (Wikipedia & DuckDuckGo) for real-time answers.
+          </div>
+        </div>
+
+        <div id="ai-key-status" style="margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 12px; background: #f8fafc; border: 1px solid #e2e8f0;">
+          Checking AI key status...
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="clearAiKey()">Remove Key</button>
+        <button class="btn-primary" onclick="saveAiKey()">Save & Activate AI →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HACKATHON DETAIL PREVIEW MODAL -->
+  <div id="hackathon-detail-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog hack-modal-dialog">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div id="modal-hack-icon" style="font-size: 26px;">🔥</div>
+          <div>
+            <h3 class="modal-title" id="modal-hack-title">Hackathon Title</h3>
+            <div style="font-size: 12px; color: var(--text-muted);" id="modal-hack-organizer">Organizer</div>
+          </div>
+        </div>
+        <button class="btn-icon-ghost" onclick="closeHackathonModal()" title="Close">&times;</button>
+      </div>
+
+      <div class="hack-modal-body">
+        <!-- Overview Banner -->
+        <div class="hack-modal-banner">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span id="modal-hack-status" class="badge badge-navy">Upcoming</span>
+              <span id="modal-hack-category" class="tag" style="background: #ffffff;">Category</span>
+              <span id="modal-hack-mode" class="tag" style="background: #ffffff;">Online</span>
+            </div>
+            <div style="font-size: 13px; color: var(--text-muted);">
+              Registration Deadline: <strong id="modal-hack-deadline" style="color: #b45309;">12 Oct 2026</strong>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 18px; font-weight: 800; color: #92400e;" id="modal-hack-prize">₹1,00,000</div>
+            <div style="font-size: 11px; color: #b45309;" id="modal-hack-prize-sub">Per Theme</div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <div class="modal-section-title"><span>📋</span> About Challenge</div>
+          <p id="modal-hack-description" style="font-size: 13px; color: var(--text-body); line-height: 1.6;"></p>
+        </div>
+
+        <!-- Metadata Row -->
+        <div class="hackathon-details-grid" style="margin: 0;">
+          <div class="hackathon-detail-item">
+            <span class="detail-label">🎓 Eligibility</span>
+            <span class="detail-value" id="modal-hack-eligibility">All Undergrads</span>
+          </div>
+          <div class="hackathon-detail-item">
+            <span class="detail-label">👥 Team Size</span>
+            <span class="detail-value" id="modal-hack-teamsize">1-4 Members</span>
+          </div>
+          <div class="hackathon-detail-item full-width">
+            <span class="detail-label">📍 Venue / Platform</span>
+            <span class="detail-value" id="modal-hack-location">Online Platform</span>
+          </div>
+        </div>
+
+        <!-- Problem Statements & Themes -->
+        <div>
+          <div class="modal-section-title"><span>🎯</span> Focus Areas & Themes</div>
+          <ul id="modal-hack-problems" class="modal-bullet-list"></ul>
+        </div>
+
+        <!-- Timeline & Rounds -->
+        <div>
+          <div class="modal-section-title"><span>⏳</span> Rounds & Schedule</div>
+          <ul id="modal-hack-rounds" class="modal-bullet-list"></ul>
+        </div>
+
+        <!-- Placement Perks & Incentives -->
+        <div>
+          <div class="modal-section-title"><span>🚀</span> Rewards & Fast-Track PPIs</div>
+          <ul id="modal-hack-perks" class="modal-bullet-list"></ul>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeHackathonModal()">Close</button>
+        <a id="modal-hack-portal-btn" href="https://unstop.com/" target="_blank" rel="noopener noreferrer" class="btn-secondary" style="text-decoration: none;">
+          Official Portal ↗
+        </a>
+        <button id="modal-hack-register-btn" class="btn-primary">Register Now ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HACKATHON REGISTRATION MODAL -->
+  <div id="hackathon-register-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog" style="max-width: 540px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title" id="reg-modal-title">Register Team</h3>
+          <div style="font-size: 12px; color: var(--text-muted);" id="reg-modal-sponsor">Organizer • Deadline: 12 Oct 2026</div>
+        </div>
+        <button class="btn-icon-ghost" onclick="closeHackathonRegisterModal()" title="Close">&times;</button>
+      </div>
+
+      <form id="hackathon-registration-form" onsubmit="submitHackathonRegistration(event)">
+        <input type="hidden" id="reg-hackathon-id" value="">
+        
+        <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; max-height: 70vh; overflow-y: auto;">
+          
+          <div style="background-color: var(--primary-light); border: 1px solid var(--primary-border); border-radius: var(--radius-md); padding: 12px 14px; font-size: 13px; color: var(--primary-accent); display: flex; align-items: center; justify-content: space-between;">
+            <div>
+              <strong>Fast-Track Registration</strong>
+              <div style="font-size: 11px; opacity: 0.85;" id="reg-modal-prize">Prize Pool & Recruitment Drive</div>
+            </div>
+            <span style="font-size: 20px;">⚡</span>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Team Leader Name</label>
+              <input type="text" id="reg-lead-name" class="form-input" required readonly style="background-color: var(--bg-main);">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Leader Email</label>
+              <input type="email" id="reg-lead-email" class="form-input" required readonly style="background-color: var(--bg-main);">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">College / Institute</label>
+            <input type="text" id="reg-lead-college" class="form-input" required readonly style="background-color: var(--bg-main);">
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Team Name *</label>
+              <input type="text" id="reg-team-name" class="form-input" placeholder="e.g. NovaCoders" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Team Size</label>
+              <select id="reg-team-size" class="form-input">
+                <option value="1 Member (Solo)">1 Member (Solo)</option>
+                <option value="2 Members">2 Members</option>
+                <option value="3 Members" selected>3 Members</option>
+                <option value="4 Members">4 Members</option>
+                <option value="5-6 Members">5-6 Members</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Problem Statement / Track</label>
+            <select id="reg-track-select" class="form-input">
+              <option value="General Track">General / Best Overall Innovation</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Project / GitHub Portfolio (Optional)</label>
+            <input type="url" id="reg-github-url" class="form-input" placeholder="https://github.com/your-username">
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-secondary" onclick="closeHackathonRegisterModal()">Cancel</button>
+          <button type="submit" class="btn-primary">Confirm Registration 🚀</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- FLOATING CONTEXT-AWARE HELP WIDGET -->
+  <button id="context-help-toggle" class="context-help-toggle-btn" aria-expanded="false" title="Page & Section Help">
+    <span>💡 Help</span>
+  </button>
+
+  <div id="context-help-panel" class="context-help-panel hidden" role="dialog" aria-labelledby="context-help-title">
+    <div class="context-help-header">
+      <div>
+        <h4 id="context-help-title">Context Help</h4>
+        <small id="context-help-location">Current page</small>
+      </div>
+      <button id="context-help-close" class="context-help-close-btn" title="Close Help">✕</button>
+    </div>
+    <div id="context-help-messages" class="context-help-messages">
+      <p class="context-help-message assistant">Hi! I'm your context assistant. Ask me anything about this page or section.</p>
+    </div>
+    <form id="context-help-form" class="context-help-form">
+      <input type="text" id="context-help-input" placeholder="Ask about this section..." autocomplete="off">
+      <button type="submit" class="btn-primary" style="padding: 6px 12px; font-size: 12px;">Ask</button>
+    </form>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-notification" class="toast hidden"></div>
+
+  <!-- Universal Application Bundle (Runs seamlessly on file:// and http://) -->
+  <script src="js/bundle.js"></script>
+
+
+</body>
+</html>
