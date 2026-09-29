@@ -11,8 +11,6 @@
     solvedDsaMap: {},
     dsaStreak: 1,
     savedJobIds: new Set(),
-    registeredHackathonIds: new Set(),
-    registeredHackathonTeams: {},
     currentUser: {
       name: 'Alex Wright',
       email: 'alex.wright@university.edu',
@@ -54,39 +52,6 @@
       state.savedJobIds.add(jobId);
       return true;
     }
-  }
-
-  // Initialize registered hackathons from localStorage if available
-  try {
-    const savedRegs = localStorage.getItem('careernova_registered_hackathons');
-    if (savedRegs) {
-      const parsed = JSON.parse(savedRegs);
-      if (Array.isArray(parsed)) {
-        parsed.forEach(id => state.registeredHackathonIds.add(id));
-      }
-    }
-  } catch(e) {}
-
-  function registerHackathonState(id, teamInfo = {}) {
-    state.registeredHackathonIds.add(id);
-    state.registeredHackathonTeams[id] = teamInfo;
-    try {
-      localStorage.setItem('careernova_registered_hackathons', JSON.stringify([...state.registeredHackathonIds]));
-    } catch(e) {}
-    return true;
-  }
-
-  function unregisterHackathonState(id) {
-    state.registeredHackathonIds.delete(id);
-    delete state.registeredHackathonTeams[id];
-    try {
-      localStorage.setItem('careernova_registered_hackathons', JSON.stringify([...state.registeredHackathonIds]));
-    } catch(e) {}
-    return true;
-  }
-
-  function isHackathonRegistered(id) {
-    return state.registeredHackathonIds.has(id);
   }
 
   /* ==========================================================================
@@ -533,6 +498,16 @@
      5. NAVIGATION & VIEW ROUTING
      ========================================================================== */
   function switchView(viewId) {
+    if (viewId === 'college' && state.currentUser && state.currentUser.role !== 'TPO') {
+      showToast('Access Restricted: College TPO Portal is strictly for verified TPO Officers.');
+      switchView('dashboard');
+      return;
+    }
+
+    if (viewId === 'college' && state.currentUser && state.currentUser.role === 'TPO') {
+      loadTpoRosterData();
+    }
+
     document.body.classList.toggle('applications-active', viewId === 'applications');
 
     const navItems = document.querySelectorAll('.nav-item');
@@ -584,90 +559,488 @@
   /* ==========================================================================
      6. AUTHENTICATION & DEMO PROFILES
      ========================================================================== */
-  function handleAuthSubmit(event) {
-    if (event && event.preventDefault) event.preventDefault();
+  const API_BASE_URL = (window.location.protocol.startsWith('http') && window.location.port === '5000') 
+    ? '' 
+    : 'http://localhost:5000';
 
-    const name = document.getElementById('auth-name')?.value?.trim() || 'Alex Wright';
-    const email = document.getElementById('auth-email')?.value?.trim() || 'alex.wright@university.edu';
-    const college = document.getElementById('auth-college')?.value?.trim() || 'Stanford University';
-    const branch = document.getElementById('auth-branch')?.value || 'Computer Science & Engineering';
-    const year = document.getElementById('auth-year')?.value || '2026';
+  let currentRole = 'Student'; // 'Student' | 'TPO'
+  let authMode = 'LOGIN';       // 'LOGIN' | 'REGISTER'
+  let pendingVerificationEmail = '';
+  let pendingResetToken = '';
 
-    state.currentUser = { name, email, college, branch, year, role: 'Student' };
-
-    const nameEl = document.getElementById('sidebar-user-name');
-    if (nameEl) nameEl.innerText = name;
-
-    const roleEl = document.getElementById('sidebar-user-role');
-    if (roleEl) roleEl.innerText = `${college.split(' ')[0]} • ${year}`;
-
-    const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-    const avatarEl = document.getElementById('sidebar-user-avatar');
-    if (avatarEl) avatarEl.innerText = initials || 'AW';
-
-    const heroNameEl = document.getElementById('hero-student-name');
-    if (heroNameEl) heroNameEl.innerText = name;
-
-    const heroSubEl = document.getElementById('hero-profile-subtitle');
-    if (heroSubEl) heroSubEl.innerText = `${college} • ${branch} '${year.slice(-2)}`;
-
-    document.getElementById('auth-view')?.classList.add('hidden');
-    document.getElementById('app-shell')?.classList.remove('hidden');
-
-    updateGaugeVisual(state.currentScore || 0);
-    switchView('dashboard');
-    showToast(`Welcome ${name}! Candidate portal initialized for ${college}.`);
+  function checkPasswordStrength(password) {
+    if (!password || password.length < 8) return { valid: false, message: 'Must be at least 8 characters long.' };
+    if (!/[A-Z]/.test(password)) return { valid: false, message: 'Must include at least one uppercase letter (A-Z).' };
+    if (!/[a-z]/.test(password)) return { valid: false, message: 'Must include at least one lowercase letter (a-z).' };
+    if (!/[0-9]/.test(password)) return { valid: false, message: 'Must include at least one digit (0-9).' };
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) return { valid: false, message: 'Must include at least one special character.' };
+    return { valid: true, message: 'Strong password!' };
   }
 
-  function demoSignIn(roleType) {
-    if (roleType === 'Student') {
-      const nameInput = document.getElementById('auth-name');
-      const collegeInput = document.getElementById('auth-college');
-      const branchInput = document.getElementById('auth-branch');
-      const yearInput = document.getElementById('auth-year');
-
-      if (nameInput) nameInput.value = 'Alexander Wright';
-      if (collegeInput) collegeInput.value = 'Stanford University';
-      if (branchInput) branchInput.value = 'Computer Science & Engineering';
-      if (yearInput) yearInput.value = '2026';
-
-      handleAuthSubmit({ preventDefault: () => {} });
+  function onPasswordInput(value) {
+    const hintEl = document.getElementById('password-strength-hint');
+    if (!hintEl) return;
+    if (!value || authMode === 'LOGIN') { hintEl.innerText = ''; return; }
+    const res = checkPasswordStrength(value);
+    if (res.valid) {
+      hintEl.className = 'password-strength-hint strength-strong';
+      hintEl.innerText = '✓ Strong password';
     } else {
-      state.currentUser = {
-        name: 'Dr. Robert Vance (TPO)',
-        email: 'tpo@university.edu',
-        college: 'Stanford University',
-        branch: 'Placement Cell',
-        year: 'Admin',
-        role: 'TPO'
-      };
+      hintEl.className = 'password-strength-hint strength-weak';
+      hintEl.innerText = `✕ ${res.message}`;
+    }
+  }
 
-      const nameEl = document.getElementById('sidebar-user-name');
-      if (nameEl) nameEl.innerText = 'Dr. Robert Vance (TPO)';
+  function togglePasswordVisibility(fieldId, btn) {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    const isPassword = field.type === 'password';
+    field.type = isPassword ? 'text' : 'password';
+    if (btn) {
+      if (isPassword) {
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858-5.908A9.954 9.954 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-4.092-4.092a3 3 0 11-4.243-4.243M3 3l18 18"/></svg>`;
+        btn.title = "Hide Password";
+      } else {
+        btn.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m-4.092-4.092a3 3 0 11-4.243-4.243M3 3l18 18"/></svg>`;
+        btn.title = "Show Password";
+      }
+    }
+  }
 
-      const roleEl = document.getElementById('sidebar-user-role');
-      if (roleEl) roleEl.innerText = 'Placement Officer';
+  function setAuthRole(role) {
+    currentRole = role;
+    const tabStudent = document.getElementById('tab-student');
+    const tabTpo = document.getElementById('tab-tpo');
+    const emailLabel = document.getElementById('auth-email-label');
+    if (role === 'Student') {
+      if (tabStudent) tabStudent.classList.add('active');
+      if (tabTpo) tabTpo.classList.remove('active');
+      if (emailLabel) emailLabel.innerText = 'College Email Address';
+    } else {
+      if (tabTpo) tabTpo.classList.add('active');
+      if (tabStudent) tabStudent.classList.remove('active');
+      if (emailLabel) emailLabel.innerText = 'Official College Email';
+    }
+    updateFormUIForCurrentState();
+  }
 
-      const avatarEl = document.getElementById('sidebar-user-avatar');
-      if (avatarEl) avatarEl.innerText = 'TP';
+  function toggleAuthMode() {
+    authMode = authMode === 'LOGIN' ? 'REGISTER' : 'LOGIN';
+    updateFormUIForCurrentState();
+  }
 
-      const heroNameEl = document.getElementById('hero-student-name');
-      if (heroNameEl) heroNameEl.innerText = 'TPO Officer';
+  function updateFormUIForCurrentState() {
+    const titleEl = document.getElementById('auth-title');
+    const subtitleEl = document.getElementById('auth-subtitle');
+    const groupName = document.getElementById('group-auth-name');
+    const groupCollege = document.getElementById('group-auth-college');
+    const groupStudentFields = document.getElementById('student-fields-group');
+    const groupConfirmPass = document.getElementById('group-confirm-password');
+    const rowForgotPass = document.getElementById('row-forgot-password');
+    const submitBtn = document.getElementById('auth-submit-btn');
+    const promptEl = document.getElementById('auth-mode-switch-prompt');
+    const switchBtn = document.getElementById('auth-mode-switch-btn');
+    const hintEl = document.getElementById('password-strength-hint');
 
-      const heroSubEl = document.getElementById('hero-profile-subtitle');
-      if (heroSubEl) heroSubEl.innerText = 'Stanford University TPO Office • Campus Placement Coordinator';
+    if (hintEl) hintEl.innerText = '';
 
+    if (authMode === 'LOGIN') {
+      if (titleEl) titleEl.innerText = currentRole === 'Student' ? 'Student Sign In' : 'TPO Officer Sign In';
+      if (subtitleEl) subtitleEl.innerText = currentRole === 'Student' 
+        ? 'Sign in to access your candidate placement dashboard.' 
+        : 'Sign in to access the campus TPO portal.';
+
+      groupName?.classList.add('hidden');
+      groupCollege?.classList.add('hidden');
+      groupStudentFields?.classList.add('hidden');
+      groupConfirmPass?.classList.add('hidden');
+      rowForgotPass?.classList.remove('hidden');
+
+      if (submitBtn) {
+        submitBtn.innerHTML = `Sign In to Portal <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+
+      if (promptEl) promptEl.innerText = "Don't have an account?";
+      if (switchBtn) switchBtn.innerText = "Create Account";
+    } else {
+      if (titleEl) titleEl.innerText = currentRole === 'Student' ? 'Create Student Account' : 'Create TPO Officer Account';
+      if (subtitleEl) subtitleEl.innerText = currentRole === 'Student' 
+        ? 'Enter your details to create an account and verify via Email OTP.' 
+        : 'Enter your official details to create a TPO account and verify via Email OTP.';
+
+      groupName?.classList.remove('hidden');
+      groupCollege?.classList.remove('hidden');
+
+      if (currentRole === 'Student') {
+        groupStudentFields?.classList.remove('hidden');
+      } else {
+        groupStudentFields?.classList.add('hidden');
+      }
+
+      groupConfirmPass?.classList.remove('hidden');
+      rowForgotPass?.classList.add('hidden');
+
+      if (submitBtn) {
+        submitBtn.innerHTML = `Create Account & Send Email OTP <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      }
+
+      if (promptEl) promptEl.innerText = "Already have an account?";
+      if (switchBtn) switchBtn.innerText = "Sign In";
+    }
+  }
+
+  async function handleAuthFormSubmit(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    if (authMode === 'LOGIN') {
+      await handleLoginFlow();
+    } else {
+      await handleRegistrationFlow();
+    }
+  }
+
+  async function handleLoginFlow() {
+    const email = document.getElementById('auth-email')?.value?.trim();
+    const password = document.getElementById('auth-password')?.value || '';
+
+    if (!email || !password) {
+      showToast('Please enter both email and password.');
+      return;
+    }
+
+    showToast('Signing in...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.message || 'Login failed. Please check your credentials.');
+        return;
+      }
+      state.currentUser = data.user;
+      applyUserToUI(state.currentUser);
       document.getElementById('auth-view')?.classList.add('hidden');
       document.getElementById('app-shell')?.classList.remove('hidden');
-      switchView('college');
-      showToast('Signed in as Campus Placement Officer (TPO Portal)');
+      if (state.currentUser.role === 'Student') {
+        updateGaugeVisual(state.currentScore || 0);
+        switchView('dashboard');
+        showToast(`Welcome back, ${state.currentUser.name}!`);
+      } else {
+        switchView('college');
+        showToast(`Welcome back, ${state.currentUser.name} (TPO Portal)`);
+      }
+    } catch (err) {
+      showToast('Network error during login.');
+    }
+  }
+
+  async function handleRegistrationFlow() {
+    const name = document.getElementById('auth-name')?.value?.trim();
+    const email = document.getElementById('auth-email')?.value?.trim();
+    const college = document.getElementById('auth-college')?.value?.trim();
+    const branch = document.getElementById('auth-branch')?.value || 'Computer Science & Engineering';
+    const year = document.getElementById('auth-year')?.value || '2026';
+    const password = document.getElementById('auth-password')?.value || '';
+    const confirmPassword = document.getElementById('auth-confirm-password')?.value || '';
+
+    if (!name) { showToast('Please enter your full name.'); return; }
+    if (!email || !email.includes('@') || !email.includes('.')) { showToast('Please enter a valid college email address.'); return; }
+    if (!college) { showToast('Please enter your college or university name.'); return; }
+
+    const strCheck = checkPasswordStrength(password);
+    if (!strCheck.valid) { showToast(`Weak Password! ${strCheck.message}`); return; }
+    if (password !== confirmPassword) { showToast('Passwords do not match.'); return; }
+
+    showToast('Creating account and sending Email OTP...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name, email, college,
+          branch: currentRole === 'Student' ? branch : 'Placement Cell',
+          year: currentRole === 'Student' ? year : 'Admin',
+          password, role: currentRole
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.message || 'Unable to send verification code. Please try again.');
+        return;
+      }
+      pendingVerificationEmail = email.toLowerCase().trim();
+      const targetEl = document.getElementById('verify-email-target');
+      if (targetEl) targetEl.innerText = pendingVerificationEmail;
+      const codeInput = document.getElementById('auth-verify-code');
+      if (codeInput) codeInput.value = '';
+      document.getElementById('auth-main-card')?.classList.add('hidden');
+      document.getElementById('auth-verify-card')?.classList.remove('hidden');
+      showToast(data.message || `Verification OTP sent to ${pendingVerificationEmail}. Check your inbox.`);
+    } catch (err) {
+      showToast('Unable to connect to authentication server.');
+    }
+  }
+
+  async function verifyEmailCode(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const codeInput = document.getElementById('auth-verify-code')?.value?.trim();
+    if (!codeInput) { showToast('Please enter the 6-digit verification code.'); return; }
+
+    showToast('Verifying code with server...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerificationEmail, otp: codeInput })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.verified) {
+        showToast(data.message || 'Invalid verification code.');
+        return;
+      }
+      state.currentUser = data.user;
+      applyUserToUI(state.currentUser);
+      document.getElementById('auth-view')?.classList.add('hidden');
+      document.getElementById('app-shell')?.classList.remove('hidden');
+      backToLogin();
+      if (state.currentUser.role === 'Student') {
+        updateGaugeVisual(state.currentScore || 0);
+        switchView('dashboard');
+        showToast(`Welcome ${state.currentUser.name}! Email verified successfully.`);
+      } else {
+        switchView('college');
+        showToast(`Welcome ${state.currentUser.name}! TPO Portal initialized.`);
+      }
+    } catch (err) {
+      showToast('Server error during OTP verification.');
+    }
+  }
+
+  async function resendVerificationCode() {
+    if (!pendingVerificationEmail) { showToast('No pending verification found.'); return; }
+    showToast('Requesting new OTP code...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerificationEmail })
+      });
+      const data = await res.json();
+      const codeInput = document.getElementById('auth-verify-code');
+      if (codeInput) codeInput.value = '';
+      showToast(data.message || `New OTP code sent to ${pendingVerificationEmail}.`);
+    } catch (err) {
+      showToast('Unable to resend verification code.');
+    }
+  }
+
+  function showForgotPassword() {
+    document.getElementById('auth-main-card')?.classList.add('hidden');
+    document.getElementById('auth-verify-card')?.classList.add('hidden');
+    document.getElementById('auth-forgot-card')?.classList.remove('hidden');
+    document.getElementById('forgot-step-1')?.classList.remove('hidden');
+    document.getElementById('forgot-step-2')?.classList.add('hidden');
+    document.getElementById('forgot-step-3')?.classList.add('hidden');
+    const subtitle = document.getElementById('forgot-subtitle');
+    if (subtitle) subtitle.innerText = 'Step 1: Enter your registered email to receive a reset OTP.';
+  }
+
+  async function sendPasswordResetCode(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const email = document.getElementById('auth-forgot-email')?.value?.trim();
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      showToast('Please enter a valid registered email address.');
+      return;
+    }
+    showToast('Sending password reset code...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.message || 'Unable to send password reset code.');
+        return;
+      }
+      pendingVerificationEmail = email.toLowerCase().trim();
+      const codeInput = document.getElementById('auth-reset-code');
+      if (codeInput) codeInput.value = '';
+      document.getElementById('forgot-step-1')?.classList.add('hidden');
+      document.getElementById('forgot-step-2')?.classList.remove('hidden');
+      const subtitle = document.getElementById('forgot-subtitle');
+      if (subtitle) subtitle.innerText = `Step 2: Enter the 6-digit reset OTP sent to ${pendingVerificationEmail}.`;
+      showToast(data.message || `Password reset OTP sent to ${pendingVerificationEmail}.`);
+    } catch (err) {
+      showToast('Server error requesting password reset.');
+    }
+  }
+
+  async function verifyResetCode(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const code = document.getElementById('auth-reset-code')?.value?.trim();
+    if (!code) { showToast('Please enter the 6-digit reset code.'); return; }
+    showToast('Verifying reset code...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/verify-reset-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerificationEmail, otp: code })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.verified) {
+        showToast(data.message || 'Invalid reset code.');
+        return;
+      }
+      pendingResetToken = data.resetToken;
+      document.getElementById('forgot-step-2')?.classList.add('hidden');
+      document.getElementById('forgot-step-3')?.classList.remove('hidden');
+      const subtitle = document.getElementById('forgot-subtitle');
+      if (subtitle) subtitle.innerText = 'Step 3: Create a strong new password.';
+      showToast('Reset code verified! Create your new password.');
+    } catch (err) {
+      showToast('Server error verifying reset code.');
+    }
+  }
+
+  async function saveNewPassword(event) {
+    if (event && event.preventDefault) event.preventDefault();
+    const newPass = document.getElementById('auth-new-password')?.value || '';
+    const confirmPass = document.getElementById('auth-confirm-new-password')?.value || '';
+    const strCheck = checkPasswordStrength(newPass);
+    if (!strCheck.valid) { showToast(`Weak Password! ${strCheck.message}`); return; }
+    if (newPass !== confirmPass) { showToast('Passwords do not match.'); return; }
+    showToast('Updating password...');
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingVerificationEmail, resetToken: pendingResetToken, newPassword: newPass })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.message || 'Unable to update password.');
+        return;
+      }
+      showToast(data.message || 'Password updated successfully!');
+      backToLogin();
+    } catch (err) {
+      showToast('Server error resetting password.');
+    }
+  }
+
+  function backToLogin() {
+    document.getElementById('auth-verify-card')?.classList.add('hidden');
+    document.getElementById('auth-forgot-card')?.classList.add('hidden');
+    document.getElementById('auth-main-card')?.classList.remove('hidden');
+    authMode = 'LOGIN';
+    updateFormUIForCurrentState();
+    const codeEl = document.getElementById('auth-verify-code'); if (codeEl) codeEl.value = '';
+    const forgotEmail = document.getElementById('auth-forgot-email'); if (forgotEmail) forgotEmail.value = '';
+    const resetCode = document.getElementById('auth-reset-code'); if (resetCode) resetCode.value = '';
+    const newPass = document.getElementById('auth-new-password'); if (newPass) newPass.value = '';
+    const confirmNewPass = document.getElementById('auth-confirm-new-password'); if (confirmNewPass) confirmNewPass.value = '';
+    const hintEl = document.getElementById('password-strength-hint'); if (hintEl) hintEl.innerText = '';
+  }
+
+  async function demoSignIn(roleType) {
+    const email = roleType === 'Student' ? 'alex.wright@university.edu' : 'tpo@university.edu';
+    const password = 'Alex@2026';
+    showToast(`Authenticating ${roleType} profile...`);
+    try {
+      const res = await fetch(API_BASE_URL + '/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showToast(data.message || 'Demo profile authentication failed.');
+        return;
+      }
+      state.currentUser = data.user;
+      applyUserToUI(state.currentUser);
+      document.getElementById('auth-view')?.classList.add('hidden');
+      document.getElementById('app-shell')?.classList.remove('hidden');
+      if (roleType === 'Student') {
+        updateGaugeVisual(state.currentScore || 0);
+        switchView('dashboard');
+        showToast('Signed in as Alexander Wright (Student Portal)');
+      } else {
+        switchView('college');
+        showToast('Signed in as Campus Placement Officer (TPO Portal)');
+      }
+    } catch (err) {
+      showToast('Server connection error.');
     }
   }
 
   function handleSignOut() {
     document.getElementById('app-shell')?.classList.add('hidden');
     document.getElementById('auth-view')?.classList.remove('hidden');
+    backToLogin();
     showToast('Signed out successfully.');
+  }
+
+  function applyUserToUI(user) {
+    if (!user) return;
+    const nameEl = document.getElementById('sidebar-user-name'); if (nameEl) nameEl.innerText = user.name;
+    const roleEl = document.getElementById('sidebar-user-role');
+    if (roleEl) {
+      roleEl.innerText = user.role === 'TPO' 
+        ? 'Placement Officer' 
+        : `${(user.college || '').split(' ')[0]} • ${user.year || ''}`;
+    }
+    const initials = user.role === 'TPO'
+      ? 'TP'
+      : (user.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'AW';
+    const avatarEl = document.getElementById('sidebar-user-avatar'); if (avatarEl) avatarEl.innerText = initials;
+    const heroNameEl = document.getElementById('hero-student-name'); if (heroNameEl) heroNameEl.innerText = user.role === 'TPO' ? 'TPO Officer' : user.name;
+    const heroSubEl = document.getElementById('hero-profile-subtitle');
+    if (heroSubEl) {
+      heroSubEl.innerText = user.role === 'TPO'
+        ? `${user.college} TPO Office • Campus Placement Coordinator`
+        : `${user.college} • ${user.branch} '${(user.year || '').slice(-2)}`;
+    }
+
+    // STRICT ROLE SEPARATION: Hide TPO Portal from Students
+    const tpoNavItem = document.querySelector('.nav-item[data-view="college"]');
+    if (tpoNavItem) {
+      tpoNavItem.style.display = user.role === 'TPO' ? 'flex' : 'none';
+    }
+  }
+
+  async function loadTpoRosterData() {
+    try {
+      const res = await fetch(API_BASE_URL + '/api/tpo/students');
+      const data = await res.json();
+      if (!res.ok || !data.success) return;
+
+      const tbody = document.getElementById('tpo-table-body');
+      const countEl = document.getElementById('tpo-student-count');
+      if (!tbody) return;
+
+      if (data.students && data.students.length > 0) {
+        tbody.innerHTML = data.students.map((s, idx) => `
+          <tr data-branch="${s.branch.includes('Computer') ? 'CS' : (s.branch.includes('Information') ? 'IT' : 'AI/DS')}" data-status="${s.isVerified ? 'Interviewing' : 'Preparing'}">
+            <td><code>SU-2026-${String(idx + 1).padStart(3, '0')}</code></td>
+            <td><strong>${escapeHtml(s.name)}</strong><br><small style="color: var(--text-muted);">${escapeHtml(s.email)}</small></td>
+            <td>${escapeHtml(s.branch)} '${(s.year || '').slice(-2)}</td>
+            <td><span class="badge ${s.isVerified ? 'badge-green' : 'badge-orange'}">${s.isVerified ? 'Verified Account' : 'Pending OTP'}</span></td>
+            <td>0 / 10</td>
+            <td>1 App</td>
+            <td><span class="badge ${s.isVerified ? 'badge-navy' : 'badge-orange'}">${s.isVerified ? 'Active Candidate' : 'Verification Required'}</span></td>
+          </tr>
+        `).join('');
+
+        if (countEl) countEl.innerText = data.students.length;
+      }
+    } catch (err) {
+      console.error('Failed to load TPO roster data:', err);
+    }
   }
 
   /* ==========================================================================
@@ -1060,782 +1433,41 @@
   }
 
   /* ==========================================================================
-     10. HACKATHONS MODULE & DATA
+     10. HACKATHONS MODULE
      ========================================================================== */
-  /* CareerNova - Placement Hackathons & Drives Data Store */
-
-const HACKATHONS_DATA = {
-  'sih-2026': {
-    id: 'sih-2026',
-    title: 'Smart India Hackathon 2026',
-    icon: '🔥',
-    organizer: 'Government of India (MoE & AICTE)',
-    category: 'Open Innovation',
-    mode: 'Online',
-    location: 'National AICTE Portal / Nodal Centers',
-    deadline: '12 Oct 2026',
-    deadlineDate: '2026-10-12',
-    status: 'Upcoming',
-    statusBadgeClass: 'badge-navy',
-    prize: '₹1,00,000',
-    prizeSubtitle: 'Per Problem Statement (₹1 Cr Total Pool)',
-    prizeAmount: 100000,
-    eligibility: 'All College Undergrads & Postgrads (AICTE / UGC Institutes)',
-    teamSize: '3 to 6 Members (Min. 1 Female Participant)',
-    description: "The world's largest open innovation initiative. Solve pressing real-world problem statements submitted by 50+ central ministries, state departments, and premier PSUs. Top teams receive direct placement fast-tracks, central funding grants, and national recognition.",
-    tags: ['Govt of India', 'AICTE', 'Open Innovation', 'Grant Funding', 'Placement Fast-Track'],
-    officialUrl: 'https://www.sih.gov.in/',
-    problemStatements: [
-      'Smart Automation & Leakage Detection for Public Distribution (MoCA)',
-      'AI-Powered Multi-Spectral Crop Disease Early Diagnosis (MoA&FW)',
-      'Offline Mesh Disaster Early-Warning Network for Coastal Regions (NDMA)',
-      'Blockchain-Verified Academic Credential & Skill Repository (AICTE)'
-    ],
-    rounds: [
-      'Campus Internal Hackathon & SPOC Vetting (Sep 2026)',
-      'National Idea Evaluation & Screening (Mid Oct 2026)',
-      '36-Hour Non-stop Grand Finale at Assigned Nodal Center (Nov 2026)'
-    ],
-    perks: [
-      '₹1,00,000 Cash Prize for each winning team per theme',
-      'Direct interview fast-tracks with participating ministry tech units & sponsors',
-      'Fast-track incubation support and up to ₹10 Lakhs seed funding grant',
-      'National Certificate of Honor issued by Ministry of Education'
-    ]
-  },
-
-  'flipkart-grid-7': {
-    id: 'flipkart-grid-7',
-    title: 'Flipkart GRiD 7.0 - SDE Sprint',
-    icon: '⚡',
-    organizer: 'Flipkart Internet Pvt. Ltd.',
-    category: 'Web Development',
-    mode: 'Online',
-    location: 'Virtual via Unstop',
-    deadline: '18 Oct 2026',
-    deadlineDate: '2026-10-18',
-    status: 'Closing Soon',
-    statusBadgeClass: 'badge-orange',
-    prize: '₹5,00,000',
-    prizeSubtitle: '+ Direct SDE Pre-Placement Interviews (₹32 LPA)',
-    prizeAmount: 500000,
-    eligibility: 'B.Tech / B.E / M.Tech / MCA (Batch of 2026 & 2027)',
-    teamSize: '1 to 3 Members',
-    description: 'Flipkart’s flagship engineering campus challenge engineered to test your mettle on real-world e-commerce scalability. Solve high-throughput checkout queues, distributed cache consistency, and supply chain routing under mega sales scale.',
-    tags: ['Flipkart', 'Web Development', 'SDE PPI', 'Microservices', '32 LPA CTC'],
-    officialUrl: 'https://unstop.com/hackathons/flipkart-grid',
-    problemStatements: [
-      'Sub-second Lock-Free Inventory Allocation for Big Billion Days',
-      'Real-time Multi-tenant Event Driven Fraud Detection Engine',
-      'Automated Optical Quality Inspection for Return Package Logistics'
-    ],
-    rounds: [
-      'Round 1: E-Commerce Domain & Advanced CS Fundamentals Quiz',
-      'Round 2: Scalable Coding Challenge & Edge Case Stress Testing',
-      'Round 3: Hackathon Prototype MVP & Architectural Defense',
-      'National Grand Finale & Live Demonstration to Flipkart Fellows'
-    ],
-    perks: [
-      'Pre-Placement Interview (PPI) for SDE-1 roles (₹32 LPA CTC)',
-      '₹5,00,000 Cash Prize pool divided among top finalists',
-      'Direct mentorship from Principal Architects at Flipkart',
-      'Exclusive Flipkart GRiD finalist tech kit and digital credentials'
-    ]
-  },
-
-  'google-genai-2026': {
-    id: 'google-genai-2026',
-    title: 'Google Cloud GenAI Challenge',
-    icon: '🤖',
-    organizer: 'Google Cloud',
-    category: 'AI & ML',
-    mode: 'Online',
-    location: 'Virtual / Google Cloud Innovators Portal',
-    deadline: '30 Oct 2026',
-    deadlineDate: '2026-10-30',
-    status: 'Upcoming',
-    statusBadgeClass: 'badge-navy',
-    prize: '₹16,50,000',
-    prizeSubtitle: '($20,000 Total Pool) + $2k Cloud Credits',
-    prizeAmount: 1650000,
-    eligibility: 'All Engineering, BCA/MCA & CS Undergrads / Grads',
-    teamSize: '1 to 4 Members',
-    description: 'Build enterprise-grade multimodal generative AI agents and intelligent search systems powered by Gemini 1.5 Pro, Vertex AI, and vector retrieval. Outstanding teams receive direct recruiter CV highlights and cloud compute stipends.',
-    tags: ['Google Cloud', 'Gemini 1.5', 'GenAI', 'Vertex AI', 'Fast-Track'],
-    officialUrl: 'https://cloud.google.com/innovators',
-    problemStatements: [
-      'Autonomous Multi-Agent Workflow Orchestrator with Tool-Use & Memory',
-      'Multimodal Clinical Diagnostic Assistant with Citation & Grounding',
-      'Zero-Shot Codebase Modernization & Unit Test Synthesis Assistant'
-    ],
-    rounds: [
-      'Idea Proposal, Architecture Diagram & Vertex AI Service Plan',
-      'Prototype Implementation & Gemini 1.5 API Integration Submission',
-      'Live Virtual Demo & Technical Defense with Google AI Engineers'
-    ],
-    perks: [
-      'Direct recruiter review for Software Engineer & AI Specialist internships',
-      '$2,000 USD Google Cloud credits for all shortlisted teams',
-      'Google Pixel devices & official Google Cloud Developer swag bags',
-      'Featured showcase in the Google Cloud Global Innovators directory'
-    ]
-  },
-
-  'tcs-hackquest-10': {
-    id: 'tcs-hackquest-10',
-    title: 'TCS HackQuest Season 10',
-    icon: '🛡️',
-    organizer: 'Tata Consultancy Services',
-    category: 'Cybersecurity',
-    mode: 'Online',
-    location: 'Virtual / TCS iON Platform',
-    deadline: '05 Nov 2026',
-    deadlineDate: '2026-11-05',
-    status: 'Upcoming',
-    statusBadgeClass: 'badge-navy',
-    prize: '₹5,00,000',
-    prizeSubtitle: '+ Direct TCS Prime (9 LPA) & Digital (7 LPA) Job Offers',
-    prizeAmount: 500000,
-    eligibility: 'B.E / B.Tech / M.E / M.Tech / MCA (2026 & 2027 Batches)',
-    teamSize: 'Individual (1 Member)',
-    description: 'Premier national cybersecurity Capture-The-Flag (CTF) tournament. Put your ethical hacking skills to the test across web security, system exploitation, cryptography, digital forensics, and binary reverse engineering.',
-    tags: ['Cybersecurity', 'CTF', 'TCS Prime', 'TCS Digital', 'Job Offers'],
-    officialUrl: 'https://www.tcs.com/careers/hackquest',
-    problemStatements: [
-      'Web Application Exploitation: Advanced Blind SQLi & JWT Forgery',
-      'Binary Reverse Engineering & ROP Chain Buffer Overflow Exploits',
-      'Cryptographic Analysis: Elliptic Curve Fault Attacks & Zero-Knowledge'
-    ],
-    rounds: [
-      'Round 1: 24-Hour Non-stop Online CTF Competition (iON Platform)',
-      'Round 2: Security Methodology Presentation & Exploit Documentation',
-      'Direct Technical Interview Rounds with TCS Cyber Security Unit Heads'
-    ],
-    perks: [
-      'Direct placement offer letters for TCS Prime (9 LPA) and TCS Digital (7 LPA)',
-      'Total cash bounty of ₹5,00,000 for top individual rankers',
-      'Waiver of standard campus aptitude & national qualifier test',
-      'Specialized certification from TCS Cyber Security Center of Excellence'
-    ]
-  },
-
-  'cloudflare-systems-2026': {
-    id: 'cloudflare-systems-2026',
-    title: 'Distributed Systems Sprint',
-    icon: '🌐',
-    organizer: 'Cloudflare',
-    category: 'Systems & Infra',
-    mode: 'Hybrid',
-    location: 'Virtual + Cloudflare Bengaluru Engineering Hub',
-    deadline: '25 Oct 2026',
-    deadlineDate: '2026-10-25',
-    status: 'Closing Soon',
-    statusBadgeClass: 'badge-orange',
-    prize: '₹12,50,000',
-    prizeSubtitle: '($15,000 Pool) + Principal Engineer Interview Bypass',
-    prizeAmount: 1250000,
-    eligibility: 'Pre-final & Final Year CS / IT / Software Eng. Students',
-    teamSize: '2 to 4 Members',
-    description: 'Design and benchmark high-throughput edge caching and resilient proxy services handling 100k+ req/sec with under 5ms P99 latency. Judged directly by Cloudflare Principal Engineers with interview bypass passes for top teams.',
-    tags: ['Cloudflare', 'Distributed Systems', 'Edge Computing', 'Rust', 'Go'],
-    officialUrl: 'https://cloudflare.com/careers',
-    problemStatements: [
-      'High-throughput Global Key-Value Cache with Zero-Downtime Re-sharding',
-      'Decentralized Rate Limiter with Gossip Protocol Synchronization',
-      'Edge WebAssembly Runtime for Streaming Response Transformations'
-    ],
-    rounds: [
-      'Architecture Specification & Distributed Invariant Verification',
-      'Automated Load Test Gauntlet: 100,000 concurrent req/sec benchmark',
-      'In-person / Virtual Code Defense & Technical Deep Dive'
-    ],
-    perks: [
-      'Direct interview round bypass to Cloudflare systems engineering team',
-      '$15,000 USD cash prize pool for the top 3 ranked teams',
-      'Cloudflare Workers Enterprise accounts with free compute tier',
-      'One-on-one architectural mentoring from Cloudflare Principal Engineers'
-    ]
-  },
-
-  'aws-mobile-sprint': {
-    id: 'aws-mobile-sprint',
-    title: 'AWS Cross-Platform Mobile Drive',
-    icon: '📱',
-    organizer: 'Amazon Web Services',
-    category: 'App Development',
-    mode: 'Online',
-    location: 'Virtual (AWS Student Developer Community)',
-    deadline: '15 Nov 2026',
-    deadlineDate: '2026-11-15',
-    status: 'Upcoming',
-    statusBadgeClass: 'badge-navy',
-    prize: '₹3,50,000',
-    prizeSubtitle: '+ AWS Certification Exam Vouchers & Recruiter Connect',
-    prizeAmount: 350000,
-    eligibility: 'All Undergraduate & Graduate Students (All Branches)',
-    teamSize: '1 to 4 Members',
-    description: 'Build responsive, offline-first mobile applications with Flutter or React Native backed by AWS Amplify, AppSync GraphQL, and Cognito. Winning teams receive AWS Certification exam vouchers and Amazon recruiter outreach.',
-    tags: ['AWS', 'App Development', 'Mobile', 'Flutter', 'React Native', 'Amplify'],
-    officialUrl: 'https://aws.amazon.com/events/',
-    problemStatements: [
-      'Offline-First Healthcare Delivery & Field Telemedicine Mobile App',
-      'Real-time Campus Carpooling & Micromobility Tracker with Geofencing',
-      'Gamified Peer-to-Peer Skill Sharing & Placement Prep Mobile Hub'
-    ],
-    rounds: [
-      'UI/UX Wireframes, Flowcharts & AWS Architecture Diagram',
-      'Working APK / TestFlight Build & GraphQL Backend Verification',
-      'Final Project Showcase & Architecture Evaluation'
-    ],
-    perks: [
-      'AWS Certified Developer Associate exam vouchers ($150 value each)',
-      '₹3,50,000 in cash prizes & Amazon gift vouchers',
-      'Resume spotlight with Amazon AWS Student Recruitment team',
-      'AWS Starter Developer Kits and premium tech backpacks'
-    ]
-  },
-
-  'polygon-web3-marathon': {
-    id: 'polygon-web3-marathon',
-    title: 'Polygon Web3 BUIDL Marathon',
-    icon: '⛓️',
-    organizer: 'Polygon Labs',
-    category: 'Blockchain',
-    mode: 'Offline',
-    location: 'Bengaluru International Exhibition Centre (BIEC)',
-    deadline: '22 Oct 2026',
-    deadlineDate: '2026-10-22',
-    status: 'Closing Soon',
-    statusBadgeClass: 'badge-orange',
-    prize: '₹20,00,000',
-    prizeSubtitle: '($25,000 Bounty Pool) + VC Seed Grants',
-    prizeAmount: 2000000,
-    eligibility: 'Open to All College Undergraduates & Web3 Developers',
-    teamSize: '2 to 4 Members',
-    description: '36-hour physical hackathon hosted at Bengaluru tech hub. Build zero-knowledge proofs, decentralized finance (DeFi) protocols, decentralized identity, and cross-chain bridges. Direct angel mentorship and VC seed grant tracks.',
-    tags: ['Polygon', 'Web3', 'Blockchain', 'Solidity', 'Offline Bengaluru', 'DeFi'],
-    officialUrl: 'https://polygon.technology/',
-    problemStatements: [
-      'Zero-Knowledge Proof Academic Transcript & Credential Verification',
-      'Decentralized Micro-Credit Lending Protocol for College Students',
-      'Decentralized Identity & Privacy-Preserving Reputation Engine'
-    ],
-    rounds: [
-      'Online GitHub Portfolio Screening & Smart Contract Abstract',
-      '36-Hour In-Person Hacking Marathon at Bengaluru Hub',
-      'Demo Day Pitch on Mainstage to Web3 Founders & Venture Capitalists'
-    ],
-    perks: [
-      'Direct fast-track seed grants up to $10,000 from Polygon Village',
-      'Full travel reimbursement and luxury stay for outstation student teams',
-      'Bounties awarded in USDC, ETH, and MATIC',
-      'Direct hiring opportunities with leading Web3 scale-ups and protocols'
-    ]
-  },
-
-  'intel-edge-iot': {
-    id: 'intel-edge-iot',
-    title: 'Intel Edge AI & IoT Sprint',
-    icon: '⚙️',
-    organizer: 'Intel Corporation',
-    category: 'IoT',
-    mode: 'Offline',
-    location: 'Intel Technology India, SRR Campus, Hyderabad',
-    deadline: '15 Sep 2026',
-    deadlineDate: '2026-09-15',
-    status: 'Closed',
-    statusBadgeClass: 'badge-gray',
-    prize: '₹2,00,000',
-    prizeSubtitle: '+ Intel OpenVINO Hardware Kits & Fast-Track Internships',
-    prizeAmount: 200000,
-    eligibility: '3rd & 4th Year ECE / EEE / CSE / IT Students',
-    teamSize: '2 to 3 Members',
-    description: 'On-device deep learning inference and edge robotics hardware hackathon using Intel OpenVINO toolkit. Registration has closed. Selected university finalists are currently demoing physical hardware prototypes at Intel Hyderabad campus.',
-    tags: ['Intel', 'IoT', 'Edge AI', 'OpenVINO', 'Embedded', 'Closed'],
-    officialUrl: 'https://intel.com/',
-    problemStatements: [
-      'Autonomous Drone Computer Vision for Disaster Relief Topography',
-      'Real-Time Industrial Defect Detection on Edge Sensors at 120 FPS'
-    ],
-    rounds: [
-      'Problem Abstract & Simulation Model Evaluation (Completed)',
-      'Hardware Developer Kit Dispatch & Local Testing (Completed)',
-      'Grand Finale Hardware Demonstration at Intel Campus Day'
-    ],
-    perks: [
-      'Intel Neural Compute Stick & AI Dev Kits for finalists',
-      'Pre-Placement Internship fast-track interviews with Intel Core Team',
-      'Cash awards and trophies for top 3 physical prototypes'
-    ]
-  }
-};
-
-
-  /* CareerNova - Placement Hackathons & Corporate Sprints Module */
-
-
-
-
-let activeQuickFilter = 'all';
-
-/**
- * Filter hackathons by status, category, mode, and search keyword.
- * Extends the existing CareerNova filtering logic.
- */
-function filterHackathons() {
-  const statusFilter = document.getElementById('hackathon-status-filter');
-  const catFilter = document.getElementById('hackathon-cat-filter');
-  const modeFilter = document.getElementById('hackathon-mode-filter');
-  const searchInput = document.getElementById('hackathon-search');
-  const cards = document.querySelectorAll('#hackathons-grid .item-card');
-  const countEl = document.getElementById('hackathon-count');
-
-  if (!statusFilter || !catFilter || !modeFilter || !cards) return;
-
-  const statusVal = statusFilter.value;
-  const catVal = catFilter.value;
-  const modeVal = modeFilter.value;
-  const searchVal = (searchInput ? searchInput.value || '' : '').toLowerCase().trim();
-
-  let visibleCount = 0;
-
-  cards.forEach(card => {
-    // Read data attributes
-    const cardStatus = card.getAttribute('data-status') || '';
-    const cardCat = card.getAttribute('data-cat') || '';
-    const cardMode = card.getAttribute('data-mode') || '';
-    const cardPrize = parseInt(card.getAttribute('data-prize') || '0', 10);
-    const isRegistered = card.getAttribute('data-registered') === 'true';
-
-    // Status filtering
-    let matchesStatus = false;
-    if (statusVal === 'All') {
-      matchesStatus = true;
-    } else if (statusVal === 'Upcoming') {
-      matchesStatus = cardStatus === 'Upcoming';
-    } else if (statusVal === 'Closing Soon') {
-      matchesStatus = cardStatus === 'Closing Soon';
-    } else if (statusVal === 'Closed') {
-      matchesStatus = cardStatus === 'Closed';
-    } else if (statusVal === 'Registered') {
-      matchesStatus = isRegistered;
-    } else {
-      matchesStatus = cardStatus.toLowerCase() === statusVal.toLowerCase();
-    }
-
-    // Category filtering
-    let matchesCat = false;
-    if (catVal === 'All') {
-      matchesCat = true;
-    } else {
-      matchesCat = cardCat === catVal || cardCat.toLowerCase().includes(catVal.toLowerCase());
-    }
-
-    // Mode filtering
-    let matchesMode = false;
-    if (modeVal === 'All') {
-      matchesMode = true;
-    } else {
-      matchesMode = cardMode.toLowerCase() === modeVal.toLowerCase() ||
-                    (modeVal === 'Offline' && cardMode.toLowerCase().includes('offline')) ||
-                    (modeVal === 'Online' && cardMode.toLowerCase().includes('online'));
-    }
-
-    // Quick Pill filtering
-    let matchesQuickPill = true;
-    if (activeQuickFilter === 'closing-soon') {
-      matchesQuickPill = (cardStatus === 'Closing Soon');
-    } else if (activeQuickFilter === 'online') {
-      matchesQuickPill = (cardMode === 'Online');
-    } else if (activeQuickFilter === 'offline') {
-      matchesQuickPill = (cardMode === 'Offline' || cardMode === 'Hybrid');
-    } else if (activeQuickFilter === 'high-prize') {
-      matchesQuickPill = cardPrize >= 400000;
-    } else if (activeQuickFilter === 'registered') {
-      matchesQuickPill = isRegistered;
-    }
-
-    // Search filtering - checks title, organizer, category, mode, description, eligibility, prize, tags
-    let matchesSearch = true;
-    if (searchVal) {
-      matchesSearch = false;
-      const titleEl = card.querySelector('.item-title') || card.querySelector('.hackathon-title');
-      const subTitleEl = card.querySelector('.item-subtitle') || card.querySelector('.hackathon-org');
-      const bodyEl = card.querySelector('.item-body') || card.querySelector('.hackathon-desc');
-      const fullText = card.innerText.toLowerCase();
-      const dataSearch = (card.getAttribute('data-search') || '').toLowerCase();
-
-      if (
-        (titleEl && titleEl.innerText.toLowerCase().includes(searchVal)) ||
-        (subTitleEl && subTitleEl.innerText.toLowerCase().includes(searchVal)) ||
-        (bodyEl && bodyEl.innerText.toLowerCase().includes(searchVal)) ||
-        fullText.includes(searchVal) ||
-        dataSearch.includes(searchVal)
-      ) {
-        matchesSearch = true;
-      }
-    }
-
-    // Combined visibility condition
-    if (matchesStatus && matchesCat && matchesMode && matchesQuickPill && matchesSearch) {
-      card.style.display = 'flex';
-      visibleCount++;
-    } else {
-      card.style.display = 'none';
-    }
-  });
-
-  if (countEl) countEl.innerText = visibleCount;
-
-  // Handle empty state display
-  const emptyState = document.getElementById('hackathon-empty-state');
-  if (emptyState) {
-    emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
-  }
-
-  // Handle search clear button
-  const clearBtn = document.getElementById('hackathon-search-clear');
-  if (clearBtn) {
-    clearBtn.style.display = searchVal ? 'inline-flex' : 'none';
-  }
-}
-
-/**
- * Reset all filters to default 'All' and clear search input
- */
-function clearHackathonFilters() {
-  const statusFilter = document.getElementById('hackathon-status-filter');
-  const catFilter = document.getElementById('hackathon-cat-filter');
-  const modeFilter = document.getElementById('hackathon-mode-filter');
-  const searchInput = document.getElementById('hackathon-search');
-
-  if (statusFilter) statusFilter.value = 'All';
-  if (catFilter) catFilter.value = 'All';
-  if (modeFilter) modeFilter.value = 'All';
-  if (searchInput) searchInput.value = '';
-
-  activeQuickFilter = 'all';
-  document.querySelectorAll('.hackathon-quick-pill').forEach(pill => {
-    pill.classList.remove('active');
-  });
-  const allPill = document.querySelector('.hackathon-quick-pill[data-filter="all"]');
-  if (allPill) allPill.classList.add('active');
-
-  filterHackathons();
-  showToast('Filters reset to show all hackathons.');
-}
-
-/**
- * Clear only the search input
- */
-function clearHackathonSearch() {
-  const searchInput = document.getElementById('hackathon-search');
-  if (searchInput) {
-    searchInput.value = '';
-    searchInput.focus();
-  }
-  filterHackathons();
-}
-
-/**
- * Select quick filter pill
- */
-function setHackathonQuickFilter(filterType, element) {
-  activeQuickFilter = filterType;
-
-  document.querySelectorAll('.hackathon-quick-pill').forEach(p => p.classList.remove('active'));
-  if (element) {
-    element.classList.add('active');
-  }
-
-  // Optional: keep select dropdowns synced when clicking a direct status pill
-  const statusFilter = document.getElementById('hackathon-status-filter');
-  if (statusFilter) {
-    if (filterType === 'closing-soon') {
-      statusFilter.value = 'Closing Soon';
-    } else if (filterType === 'registered') {
-      statusFilter.value = 'Registered';
-    } else if (filterType === 'all') {
-      statusFilter.value = 'All';
-    }
-  }
-
-  filterHackathons();
-}
-
-/**
- * Legacy & quick registration handler
- */
-function registerHackathon(name, hackathonId = null) {
-  if (hackathonId) {
-    openHackathonRegister(hackathonId);
-    return;
-  }
-  showToast(`Registered team for ${name}!`);
-}
-
-/**
- * Open registration modal for specific hackathon
- */
-function openHackathonRegister(hackathonId) {
-  const hackathon = HACKATHONS_DATA[hackathonId];
-  if (!hackathon) {
-    showToast('Hackathon details not found.');
-    return;
-  }
-
-  if (hackathon.status === 'Closed') {
-    showToast('Registration for this hackathon has closed.');
-    return;
-  }
-
-  if (isHackathonRegistered(hackathonId)) {
-    // If already registered, offer option to unregister or view info
-    if (confirm(`You are already registered for ${hackathon.title}. Would you like to withdraw your registration?`)) {
-      unregisterHackathonState(hackathonId);
-      updateRegisteredCardsUI();
-      filterHackathons();
-      showToast(`Registration withdrawn for ${hackathon.title}.`);
-    }
-    return;
-  }
-
-  const modal = document.getElementById('hackathon-register-modal');
-  if (!modal) return;
-
-  // Set modal fields
-  document.getElementById('reg-hackathon-id').value = hackathon.id;
-  document.getElementById('reg-modal-title').innerText = `Register: ${hackathon.title}`;
-  document.getElementById('reg-modal-sponsor').innerText = `${hackathon.organizer} • Deadline: ${hackathon.deadline}`;
-  document.getElementById('reg-modal-prize').innerText = `${hackathon.prize} Prize • Mode: ${hackathon.mode}`;
-
-  // Pre-fill user profile info
-  const user = state.currentUser || {};
-  const leadNameInput = document.getElementById('reg-lead-name');
-  const leadEmailInput = document.getElementById('reg-lead-email');
-  const leadCollegeInput = document.getElementById('reg-lead-college');
-  const teamNameInput = document.getElementById('reg-team-name');
-
-  if (leadNameInput) leadNameInput.value = user.name || 'Alex Wright';
-  if (leadEmailInput) leadEmailInput.value = user.email || 'alex.wright@university.edu';
-  if (leadCollegeInput) leadCollegeInput.value = user.college || 'Stanford University';
-  if (teamNameInput) teamNameInput.value = `Team Nova ${Math.floor(100 + Math.random() * 900)}`;
-
-  // Populate track options
-  const trackSelect = document.getElementById('reg-track-select');
-  if (trackSelect) {
-    trackSelect.innerHTML = '<option value="General Track">General / Best Overall Innovation</option>';
-    if (hackathon.problemStatements && hackathon.problemStatements.length > 0) {
-      hackathon.problemStatements.forEach(ps => {
-        const opt = document.createElement('option');
-        opt.value = ps;
-        opt.innerText = ps;
-        trackSelect.appendChild(opt);
-      });
-    }
-  }
-
-  modal.classList.remove('hidden');
-}
-
-/**
- * Close registration modal
- */
-function closeHackathonRegisterModal() {
-  const modal = document.getElementById('hackathon-register-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-/**
- * Submit registration form
- */
-function submitHackathonRegistration(event) {
-  if (event) event.preventDefault();
-
-  const hackathonId = document.getElementById('reg-hackathon-id').value;
-  const teamName = document.getElementById('reg-team-name').value.trim() || 'Team Nova';
-  const teamSize = document.getElementById('reg-team-size').value;
-  const selectedTrack = document.getElementById('reg-track-select').value;
-  const hackathon = HACKATHONS_DATA[hackathonId];
-  const hackathonTitle = hackathon ? hackathon.title : 'the hackathon';
-
-  // Save to application state & localStorage
-  registerHackathonState(hackathonId, {
-    teamName,
-    teamSize,
-    selectedTrack,
-    registeredAt: new Date().toLocaleDateString()
-  });
-
-  updateRegisteredCardsUI();
-  filterHackathons();
-  closeHackathonRegisterModal();
-
-  showToast(`🎉 Registered "${teamName}" for ${hackathonTitle}! Confirmation sent.`);
-}
-
-/**
- * Open detail preview modal for a hackathon
- */
-function openHackathonModal(hackathonId) {
-  const hackathon = HACKATHONS_DATA[hackathonId];
-  if (!hackathon) {
-    showToast('Hackathon details not found.');
-    return;
-  }
-
-  const modal = document.getElementById('hackathon-detail-modal');
-  if (!modal) return;
-
-  document.getElementById('modal-hack-icon').innerText = hackathon.icon || '🔥';
-  document.getElementById('modal-hack-title').innerText = hackathon.title;
-  document.getElementById('modal-hack-organizer').innerText = hackathon.organizer;
-  document.getElementById('modal-hack-status').innerText = hackathon.status;
-  document.getElementById('modal-hack-status').className = `badge ${hackathon.statusBadgeClass || 'badge-navy'}`;
-  document.getElementById('modal-hack-category').innerText = hackathon.category;
-  document.getElementById('modal-hack-mode').innerText = hackathon.mode;
-  document.getElementById('modal-hack-deadline').innerText = hackathon.deadline;
-  document.getElementById('modal-hack-prize').innerText = hackathon.prize;
-  document.getElementById('modal-hack-prize-sub').innerText = hackathon.prizeSubtitle || '';
-  document.getElementById('modal-hack-eligibility').innerText = hackathon.eligibility;
-  document.getElementById('modal-hack-teamsize').innerText = hackathon.teamSize;
-  document.getElementById('modal-hack-location').innerText = hackathon.location;
-  document.getElementById('modal-hack-description').innerText = hackathon.description;
-
-  // Problem statements list
-  const psList = document.getElementById('modal-hack-problems');
-  if (psList) {
-    psList.innerHTML = '';
-    (hackathon.problemStatements || []).forEach(ps => {
-      const li = document.createElement('li');
-      li.innerText = ps;
-      psList.appendChild(li);
-    });
-  }
-
-  // Rounds / Timeline
-  const roundsList = document.getElementById('modal-hack-rounds');
-  if (roundsList) {
-    roundsList.innerHTML = '';
-    (hackathon.rounds || []).forEach(r => {
-      const li = document.createElement('li');
-      li.innerText = r;
-      roundsList.appendChild(li);
-    });
-  }
-
-  // Perks & Incentives
-  const perksList = document.getElementById('modal-hack-perks');
-  if (perksList) {
-    perksList.innerHTML = '';
-    (hackathon.perks || []).forEach(p => {
-      const li = document.createElement('li');
-      li.innerText = p;
-      perksList.appendChild(li);
-    });
-  }
-
-  // External Portal link
-  const portalBtn = document.getElementById('modal-hack-portal-btn');
-  if (portalBtn) {
-    portalBtn.href = hackathon.officialUrl || 'https://unstop.com/';
-  }
-
-  // Register CTA button in modal
-  const regCtaBtn = document.getElementById('modal-hack-register-btn');
-  if (regCtaBtn) {
-    if (hackathon.status === 'Closed') {
-      regCtaBtn.innerText = 'Registration Closed';
-      regCtaBtn.disabled = true;
-      regCtaBtn.className = 'btn-secondary';
-      regCtaBtn.onclick = null;
-    } else if (isHackathonRegistered(hackathonId)) {
-      regCtaBtn.innerText = '✓ Registered';
-      regCtaBtn.disabled = false;
-      regCtaBtn.className = 'btn-secondary btn-registered';
-      regCtaBtn.onclick = () => {
-        closeHackathonModal();
-        openHackathonRegister(hackathonId);
-      };
-    } else {
-      regCtaBtn.innerText = 'Register Now ↗';
-      regCtaBtn.disabled = false;
-      regCtaBtn.className = 'btn-primary';
-      regCtaBtn.onclick = () => {
-        closeHackathonModal();
-        openHackathonRegister(hackathonId);
-      };
-    }
-  }
-
-  modal.classList.remove('hidden');
-}
-
-/**
- * Close detail modal
- */
-function closeHackathonModal() {
-  const modal = document.getElementById('hackathon-detail-modal');
-  if (modal) modal.classList.add('hidden');
-}
-
-/**
- * Update card registration badges and buttons across the DOM
- */
-function updateRegisteredCardsUI() {
-  const cards = document.querySelectorAll('#hackathons-grid .item-card');
-  let regCount = 0;
-
-  cards.forEach(card => {
-    const hackathonId = card.getAttribute('data-id');
-    const isRegistered = isHackathonRegistered(hackathonId);
-    card.setAttribute('data-registered', isRegistered ? 'true' : 'false');
-
-    const regBtn = card.querySelector('.register-btn');
-    if (regBtn) {
-      if (card.getAttribute('data-status') === 'Closed') {
-        regBtn.innerText = 'Registration Closed';
-        regBtn.disabled = true;
-        regBtn.classList.remove('btn-primary', 'btn-registered');
-        regBtn.classList.add('btn-secondary');
-        regBtn.style.opacity = '0.65';
-        regBtn.style.cursor = 'not-allowed';
-      } else if (isRegistered) {
-        regCount++;
-        regBtn.innerHTML = '✓ Registered';
-        regBtn.disabled = false;
-        regBtn.classList.remove('btn-primary');
-        regBtn.classList.add('btn-secondary', 'btn-registered');
-        regBtn.style.opacity = '1';
-        regBtn.style.cursor = 'pointer';
-        regBtn.title = 'Click to view or withdraw registration';
+  function filterHackathons() {
+    const statusFilter = document.getElementById('hackathon-status-filter');
+    const catFilter = document.getElementById('hackathon-cat-filter');
+    const cards = document.querySelectorAll('#hackathons-grid .item-card');
+    const countEl = document.getElementById('hackathon-count');
+
+    if (!statusFilter || !catFilter) return;
+
+    const statusVal = statusFilter.value;
+    const catVal = catFilter.value;
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status');
+      const cardCat = card.getAttribute('data-cat');
+
+      const matchesStatus = (statusVal === 'All' || cardStatus === statusVal);
+      const matchesCat = (catVal === 'All' || cardCat === catVal);
+
+      if (matchesStatus && matchesCat) {
+        card.style.display = 'flex';
+        visibleCount++;
       } else {
-        regBtn.innerHTML = 'Register Now ↗';
-        regBtn.disabled = false;
-        regBtn.classList.remove('btn-registered', 'btn-secondary');
-        regBtn.classList.add('btn-primary');
-        regBtn.style.opacity = '1';
-        regBtn.style.cursor = 'pointer';
-        regBtn.title = 'Register team for this hackathon';
+        card.style.display = 'none';
       }
-    }
-  });
+    });
 
-  // Update badge counter in summary bar
-  const badgeCountEl = document.getElementById('hackathon-registered-count-badge');
-  if (badgeCountEl) {
-    badgeCountEl.innerText = regCount;
+    if (countEl) countEl.innerText = visibleCount;
   }
-}
 
-/**
- * Module initialization
- */
-function initHackathonsModule() {
-  updateRegisteredCardsUI();
-  filterHackathons();
-}
-
+  function registerHackathon(name) {
+    showToast(`Registered team for ${name}!`);
+  }
 
   /* ==========================================================================
      11. INTERACTIVE CHATGPT & GEMINI AI CHATBOT ENGINE
@@ -2892,9 +2524,21 @@ In any distributed data store, you can only guarantee at most **two out of three
      ========================================================================== */
   window.state = state;
   window.showToast = showToast;
-  window.handleAuthSubmit = handleAuthSubmit;
+  window.handleAuthFormSubmit = handleAuthFormSubmit;
+  window.handleAuthSubmit = handleAuthFormSubmit;
   window.demoSignIn = demoSignIn;
   window.handleSignOut = handleSignOut;
+  window.setAuthRole = setAuthRole;
+  window.toggleAuthMode = toggleAuthMode;
+  window.verifyEmailCode = verifyEmailCode;
+  window.resendVerificationCode = resendVerificationCode;
+  window.showForgotPassword = showForgotPassword;
+  window.sendPasswordResetCode = sendPasswordResetCode;
+  window.verifyResetCode = verifyResetCode;
+  window.saveNewPassword = saveNewPassword;
+  window.backToLogin = backToLogin;
+  window.onPasswordInput = onPasswordInput;
+  window.togglePasswordVisibility = togglePasswordVisibility;
   window.switchView = switchView;
   window.handleGlobalSearch = handleGlobalSearch;
   window.updateGaugeVisual = updateGaugeVisual;
@@ -2918,16 +2562,7 @@ In any distributed data store, you can only guarantee at most **two out of three
 
   // Hackathons
   window.filterHackathons = filterHackathons;
-  window.clearHackathonFilters = clearHackathonFilters;
-  window.clearHackathonSearch = clearHackathonSearch;
-  window.setHackathonQuickFilter = setHackathonQuickFilter;
   window.registerHackathon = registerHackathon;
-  window.openHackathonRegister = openHackathonRegister;
-  window.closeHackathonRegisterModal = closeHackathonRegisterModal;
-  window.submitHackathonRegistration = submitHackathonRegistration;
-  window.openHackathonModal = openHackathonModal;
-  window.closeHackathonModal = closeHackathonModal;
-  window.initHackathonsModule = initHackathonsModule;
 
   // Interactive AI Chatbot (ChatGPT / Gemini)
   window.sendChatMessage = sendChatMessage;
@@ -2959,576 +2594,11 @@ In any distributed data store, you can only guarantee at most **two out of three
   window.initContextChatbot = initContextChatbot;
   window.refreshContextHelp = refreshContextHelp;
 
-  /* ==========================================================================
-     15. NOTIFICATION CENTER
-     ========================================================================== */
-  class NotificationManager {
-    constructor() {
-      this.currentFilter = 'all';
-      this.notifications = [
-        {
-          id: 1,
-          title: "Google placement drive opened",
-          description: "Google 2026 Campus Recruitment is now live. Explore interview rounds & preparation checklist.",
-          time: "Just now",
-          category: "deadlines",
-          type: "drive",
-          target: "Google",
-          isRead: false
-        },
-        {
-          id: 2,
-          title: "You have been shortlisted",
-          description: "Congratulations! Shortlisted for Amazon SDE-1 Technical Round. Try a mock interview session.",
-          time: "45 min ago",
-          category: "interviews",
-          type: "interview",
-          target: "Amazon",
-          isRead: false
-        },
-        {
-          id: 3,
-          title: "New hackathon added",
-          description: "Distributed Systems Sprint 2026 with $15k in prize pool is now open for university teams.",
-          time: "2 hours ago",
-          category: "hackathons",
-          type: "hackathon",
-          target: "Distributed Systems Sprint",
-          isRead: false
-        },
-        {
-          id: 4,
-          title: "New verified job alert",
-          description: "Stripe posted Frontend Engineer (New Grad 2026) — Remote / Hybrid.",
-          time: "4 hours ago",
-          category: "jobs",
-          type: "job",
-          target: "Frontend",
-          isRead: false
-        },
-        {
-          id: 5,
-          title: "Google drive deadline is tomorrow",
-          description: "Reminder: Submit your online assessment score before tomorrow 11:59 PM.",
-          time: "1 day ago",
-          category: "deadlines",
-          type: "drive",
-          target: "Google",
-          isRead: false
-        }
-      ];
-    }
-
-    getUnreadCount() {
-      return this.notifications.filter(item => !item.isRead).length;
-    }
-
-    markAsRead(id) {
-      const target = this.notifications.find(item => item.id === id);
-      if (target) {
-        target.isRead = true;
-        this.updateBadge();
-      }
-    }
-
-    markAllAsRead() {
-      this.notifications.forEach(item => (item.isRead = true));
-      this.updateBadge();
-      if (typeof document !== 'undefined') {
-        this.renderUI(document.getElementById('notification-center-panel'), this.currentFilter);
-      }
-      if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
-        window.showToast('All notifications marked as read.');
-      }
-    }
-
-    clearAll() {
-      this.notifications = [];
-      this.updateBadge();
-      if (typeof document !== 'undefined') {
-        this.renderUI(document.getElementById('notification-center-panel'), this.currentFilter);
-      }
-      if (typeof window !== 'undefined' && typeof window.showToast === 'function') {
-        window.showToast('All notifications cleared.');
-      }
-    }
-
-    getByCategory(category) {
-      if (!category || category === "all") {
-        return this.notifications;
-      }
-      return this.notifications.filter(
-        item => item.category.toLowerCase() === category.toLowerCase()
-      );
-    }
-
-    updateBadge() {
-      if (typeof document === 'undefined') return;
-      const count = this.getUnreadCount();
-      const badge = document.getElementById('notification-badge');
-      if (badge) {
-        badge.textContent = count;
-        badge.style.display = count > 0 ? 'inline-block' : 'none';
-      }
-    }
-
-    handleNotificationClick(id) {
-      const item = this.notifications.find(n => n.id === id);
-      if (!item) return;
-
-      this.markAsRead(id);
-      this.renderUI(document.getElementById('notification-center-panel'), this.currentFilter);
-
-      if (item.type === 'drive') {
-        if (typeof window.switchView === 'function') {
-          window.switchView('applications');
-        }
-        if (typeof window.openCompanyPreparation === 'function' && item.target) {
-          window.openCompanyPreparation(item.target);
-        }
-      } else if (item.type === 'hackathon') {
-        if (typeof window.switchView === 'function') {
-          window.switchView('hackathons');
-        }
-      } else if (item.type === 'job') {
-        if (typeof window.switchView === 'function') {
-          window.switchView('jobs');
-        }
-        if (typeof window.filterJobs === 'function' && item.target) {
-          window.filterJobs(item.target);
-        }
-      } else if (item.type === 'interview') {
-        if (typeof window.openMockInterviewModal === 'function') {
-          window.openMockInterviewModal();
-        } else if (typeof window.switchView === 'function') {
-          window.switchView('aichat');
-        }
-      }
-
-      const panel = document.getElementById('notification-center-panel');
-      if (panel) panel.classList.add('hidden');
-    }
-
-    renderUI(containerElement, categoryFilter = "all") {
-      if (!containerElement) return;
-      this.currentFilter = categoryFilter;
-
-      const itemsToDisplay = this.getByCategory(categoryFilter);
-      const unreadCount = this.getUnreadCount();
-      this.updateBadge();
-
-      const categories = [
-        { id: 'all', label: 'All' },
-        { id: 'deadlines', label: 'Drives 🏢' },
-        { id: 'hackathons', label: 'Hackathons 🏆' },
-        { id: 'jobs', label: 'Jobs 💼' },
-        { id: 'interviews', label: 'Shortlists 🎯' }
-      ];
-
-      const filterTabsHtml = `
-        <div class="notification-tabs">
-          ${categories.map(cat => `
-            <button class="notification-tab-btn ${this.currentFilter === cat.id ? 'active' : ''}" 
-                    onclick="setNotificationCategory('${cat.id}')">
-              ${cat.label}
-            </button>
-          `).join('')}
-        </div>
-      `;
-
-      if (itemsToDisplay.length === 0) {
-        containerElement.innerHTML = `
-          <div class="notification-header">
-            <h3>🔔 Notifications <span class="badge">${unreadCount}</span></h3>
-            <div class="notification-actions">
-              <button onclick="markAllNotificationsRead()">Mark all read</button>
-              <button onclick="clearAllNotifications()">Clear all</button>
-            </div>
-          </div>
-          ${filterTabsHtml}
-          <div class="notification-empty">No notifications in this category</div>
-        `;
-        return;
-      }
-
-      const html = `
-        <div class="notification-header">
-          <h3>🔔 Notifications <span class="badge">${unreadCount}</span></h3>
-          <div class="notification-actions">
-            <button onclick="markAllNotificationsRead()">Mark all read</button>
-            <button onclick="clearAllNotifications()">Clear all</button>
-          </div>
-        </div>
-        ${filterTabsHtml}
-        <ul class="notification-list">
-          ${itemsToDisplay
-            .map(
-              item => `
-            <li class="notification-item ${item.isRead ? "read" : "unread"}" 
-                data-id="${item.id}" 
-                onclick="handleNotificationItemClick(${item.id})">
-              <div class="notification-content">
-                <div class="notification-title-row">
-                  <span class="notification-tag tag-${item.category}">${item.category.toUpperCase()}</span>
-                  <span class="notification-time">${item.time}</span>
-                </div>
-                <p class="notification-text">${item.title}</p>
-                ${item.description ? `<p class="notification-desc">${item.description}</p>` : ''}
-              </div>
-              ${!item.isRead ? `<button class="mark-read-btn" onclick="event.stopPropagation(); markNotificationRead(${item.id})">Read</button>` : ""}
-            </li>
-          `
-            )
-            .join("")}
-        </ul>
-      `;
-
-      containerElement.innerHTML = html;
-    }
-  }
-
-  const notificationManager = new NotificationManager();
-
-  function toggleNotificationCenter() {
-    const panel = document.getElementById('notification-center-panel');
-    if (!panel) return;
-    const isHidden = panel.classList.contains('hidden');
-
-    const searchDropdown = document.getElementById('global-search-results');
-    if (searchDropdown) searchDropdown.classList.add('hidden');
-
-    if (isHidden) {
-      notificationManager.renderUI(panel, notificationManager.currentFilter);
-      panel.classList.remove('hidden');
-    } else {
-      panel.classList.add('hidden');
-    }
-  }
-
-  function setNotificationCategory(category) {
-    const panel = document.getElementById('notification-center-panel');
-    notificationManager.renderUI(panel, category);
-  }
-
-  function markNotificationRead(id) {
-    notificationManager.markAsRead(id);
-    const panel = document.getElementById('notification-center-panel');
-    notificationManager.renderUI(panel, notificationManager.currentFilter);
-  }
-
-  function markAllNotificationsRead() {
-    notificationManager.markAllAsRead();
-  }
-
-  function clearAllNotifications() {
-    notificationManager.clearAll();
-  }
-
-  function handleNotificationItemClick(id) {
-    notificationManager.handleNotificationClick(id);
-  }
-
-  /* ==========================================================================
-     16. GLOBAL SEARCH ENGINE & ROUTING
-     ========================================================================== */
-  class GlobalSearchEngine {
-    constructor() {
-      this.database = {
-        companies: [
-          { name: "Google Placement Roadmap", tag: "Google", desc: "4 Rounds • DSA & System Design" },
-          { name: "Microsoft Technical Rounds", tag: "Microsoft", desc: "3 Rounds • Cloud & Algorithms" },
-          { name: "Amazon Preparation", tag: "Amazon", desc: "4 Rounds • Leadership Principles & DSA" },
-          { name: "NVIDIA Systems Track", tag: "NVIDIA", desc: "3 Rounds • C++ & Concurrency" },
-          { name: "Infosys Specialist Programmer", tag: "Infosys", desc: "2 Rounds • Speed Coding" },
-          { name: "TCS Digital Assessment", tag: "TCS", desc: "2 Rounds • Aptitude & CS Core" }
-        ],
-        jobs: [
-          { name: "Amazon Software Engineer", tag: "Amazon", badge: "New Grad", role: "Backend" },
-          { name: "Google Frontend Developer", tag: "Google", badge: "Verified", role: "Frontend" },
-          { name: "Microsoft Cloud Engineer", tag: "Microsoft", badge: "Full-Time", role: "Fullstack" },
-          { name: "Stripe Full-Stack Engineer", tag: "Stripe", badge: "Remote", role: "Fullstack" },
-          { name: "SDE-1 Summer Internship", tag: "General", badge: "Internship", role: "Internships" }
-        ],
-        dsa: [
-          { name: "Two Sum", tag: "Array", difficulty: "Easy", id: 1 },
-          { name: "Valid Parentheses", tag: "Stack", difficulty: "Easy", id: 2 },
-          { name: "Merge Two Sorted Lists", tag: "Linked List", difficulty: "Easy", id: 3 },
-          { name: "Best Time to Buy & Sell Stock", tag: "Array", difficulty: "Easy", id: 4 },
-          { name: "Longest Substring Without Repeating", tag: "String", difficulty: "Medium", id: 5 },
-          { name: "3Sum", tag: "Two Pointers", difficulty: "Medium", id: 6 },
-          { name: "Binary Tree Level Order Traversal", tag: "Tree", difficulty: "Medium", id: 7 },
-          { name: "Course Schedule", tag: "Graph", difficulty: "Medium", id: 8 },
-          { name: "LRU Cache", tag: "Design", difficulty: "Medium", id: 9 },
-          { name: "Trapping Rain Water", tag: "Dynamic Programming", difficulty: "Hard", id: 10 }
-        ],
-        hackathons: [
-          { name: "Smart India Hackathon 2026", tag: "Open Innovation", prize: "₹1,00,000" },
-          { name: "Flipkart GRiD 7.0 - SDE Sprint", tag: "Web Development", prize: "₹5,00,000" },
-          { name: "Google Cloud GenAI Challenge", tag: "AI & ML", prize: "₹16,50,000" },
-          { name: "TCS HackQuest Season 10", tag: "Cybersecurity", prize: "₹5,00,000" },
-          { name: "Distributed Systems Sprint", tag: "Systems & Infra", prize: "₹12,50,000" },
-          { name: "AWS Cross-Platform Mobile Drive", tag: "App Development", prize: "₹3,50,000" },
-          { name: "Polygon Web3 BUIDL Marathon", tag: "Blockchain", prize: "₹20,00,000" },
-          { name: "Intel Edge AI & IoT Sprint", tag: "IoT", prize: "₹2,00,000" }
-        ]
-      };
-    }
-
-    search(query) {
-      const term = (query || '').trim().toLowerCase();
-
-      if (!term) {
-        return { companies: [], jobs: [], dsa: [], hackathons: [] };
-      }
-
-      const isCompanyIntent = /company|companies|drive|drives|placement|roadmap/i.test(term);
-      const isJobIntent = /job|jobs|intern|internship|hiring|career|role/i.test(term);
-      const isDsaIntent = /dsa|problem|algo|algorithm|leetcode|sheet|data structure/i.test(term);
-      const isHackathonIntent = /hackathon|sprint|challenge|prize|event/i.test(term);
-
-      return {
-        companies: this.database.companies.filter(
-          c => isCompanyIntent || c.name.toLowerCase().includes(term) || c.tag.toLowerCase().includes(term)
-        ),
-        jobs: this.database.jobs.filter(
-          j => isJobIntent || j.name.toLowerCase().includes(term) || j.tag.toLowerCase().includes(term) || (j.role && j.role.toLowerCase().includes(term))
-        ),
-        dsa: this.database.dsa.filter(
-          d => isDsaIntent || d.name.toLowerCase().includes(term) || d.tag.toLowerCase().includes(term) || (d.difficulty && d.difficulty.toLowerCase().includes(term))
-        ),
-        hackathons: this.database.hackathons.filter(
-          h => isHackathonIntent || h.name.toLowerCase().includes(term) || h.tag.toLowerCase().includes(term)
-        )
-      };
-    }
-
-    renderResults(results, resultsContainerElement) {
-      if (!resultsContainerElement) return;
-
-      const totalResults =
-        results.companies.length + results.jobs.length + results.dsa.length + results.hackathons.length;
-
-      if (totalResults === 0) {
-        resultsContainerElement.innerHTML = `
-          <div class="search-results-card">
-            <div class="search-empty">No results found matching your search.</div>
-          </div>
-        `;
-        resultsContainerElement.classList.remove('hidden');
-        return;
-      }
-
-      let html = `<div class="search-results-card">`;
-
-      if (results.companies.length > 0) {
-        html += `
-          <div class="search-category">
-            <h4>🏢 Target Companies</h4>
-            <ul>
-              ${results.companies
-                .map(
-                  c => `
-                <li onclick="executeSearchRoute('company', '${c.tag}', '${escape(c.name)}')">
-                  <span>&rarr; <strong>${c.name}</strong></span>
-                  <span class="search-item-badge">${c.tag}</span>
-                </li>`
-                )
-                .join("")}
-            </ul>
-          </div>`;
-      }
-
-      if (results.dsa.length > 0) {
-        html += `
-          <div class="search-category">
-            <h4>🧩 DSA Practice Problems</h4>
-            <ul>
-              ${results.dsa
-                .map(
-                  d => `
-                <li onclick="executeSearchRoute('dsa', '${d.id || d.name}', '${escape(d.name)}')">
-                  <span>&rarr; <strong>${d.name}</strong> (${d.tag})</span>
-                  <span class="search-item-badge">${d.difficulty}</span>
-                </li>`
-                )
-                .join("")}
-            </ul>
-          </div>`;
-      }
-
-      if (results.jobs.length > 0) {
-        html += `
-          <div class="search-category">
-            <h4>💼 Verified Job Openings</h4>
-            <ul>
-              ${results.jobs
-                .map(
-                  j => `
-                <li onclick="executeSearchRoute('jobs', '${j.role || j.tag}', '${escape(j.name)}')">
-                  <span>&rarr; <strong>${j.name}</strong></span>
-                  <span class="search-item-badge">${j.badge || j.tag}</span>
-                </li>`
-                )
-                .join("")}
-            </ul>
-          </div>`;
-      }
-
-      if (results.hackathons.length > 0) {
-        html += `
-          <div class="search-category">
-            <h4>🏆 Hackathons & Drives</h4>
-            <ul>
-              ${results.hackathons
-                .map(
-                  h => `
-                <li onclick="executeSearchRoute('hackathons', '${h.name}', '${escape(h.name)}')">
-                  <span>&rarr; <strong>${h.name}</strong></span>
-                  <span class="search-item-badge">${h.prize}</span>
-                </li>`
-                )
-                .join("")}
-            </ul>
-          </div>`;
-      }
-
-      html += `</div>`;
-      resultsContainerElement.innerHTML = html;
-      resultsContainerElement.classList.remove('hidden');
-    }
-  }
-
-  const globalSearchEngine = new GlobalSearchEngine();
-
-  function executeSearchRoute(category, target) {
-    const resultsContainer = document.getElementById('global-search-results');
-    if (resultsContainer) resultsContainer.classList.add('hidden');
-
-    const searchInput = document.getElementById('global-search-input');
-    if (searchInput) searchInput.value = '';
-
-    if (category === 'company') {
-      if (typeof window.switchView === 'function') {
-        window.switchView('applications');
-      }
-      if (typeof window.openCompanyPreparation === 'function') {
-        window.openCompanyPreparation(target);
-      }
-    } else if (category === 'dsa') {
-      if (typeof window.switchView === 'function') {
-        window.switchView('dsa');
-      }
-      const problemId = parseInt(target, 10);
-      if (!isNaN(problemId) && typeof window.openDsaProblem === 'function') {
-        window.openDsaProblem(problemId);
-      } else {
-        const dsaSearch = document.getElementById('dsa-search');
-        if (dsaSearch) {
-          dsaSearch.value = target;
-          dsaSearch.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }
-    } else if (category === 'jobs') {
-      if (typeof window.switchView === 'function') {
-        window.switchView('jobs');
-      }
-      if (typeof window.filterJobs === 'function') {
-        window.filterJobs(target);
-      }
-    } else if (category === 'hackathons') {
-      if (typeof window.switchView === 'function') {
-        window.switchView('hackathons');
-      }
-      const hackSearch = document.getElementById('hackathon-search');
-      if (hackSearch) {
-        hackSearch.value = target;
-        filterHackathons();
-      }
-    }
-  }
-
-  function handleGlobalSearchInput(query) {
-    const container = document.getElementById('global-search-results');
-    if (!container) return;
-
-    if (!query || !query.trim()) {
-      container.classList.add('hidden');
-      return;
-    }
-
-    const results = globalSearchEngine.search(query);
-    globalSearchEngine.renderResults(results, container);
-  }
-
-  function handleGlobalSearchKeyDown(event) {
-    if (event.key === 'Escape') {
-      const container = document.getElementById('global-search-results');
-      if (container) container.classList.add('hidden');
-    } else if (event.key === 'Enter') {
-      event.preventDefault();
-      const query = event.target.value.trim();
-      if (!query) return;
-
-      const results = globalSearchEngine.search(query);
-      if (results.companies.length > 0) {
-        executeSearchRoute('company', results.companies[0].tag);
-      } else if (results.dsa.length > 0) {
-        executeSearchRoute('dsa', results.dsa[0].id || results.dsa[0].name);
-      } else if (results.jobs.length > 0) {
-        executeSearchRoute('jobs', results.jobs[0].role || results.jobs[0].tag);
-      } else if (results.hackathons.length > 0) {
-        executeSearchRoute('hackathons', results.hackathons[0].name);
-      } else if (typeof window.handleGlobalSearch === 'function') {
-        window.handleGlobalSearch(query);
-        const container = document.getElementById('global-search-results');
-        if (container) container.classList.add('hidden');
-      }
-    }
-  }
-
-  // Close search and notification dropdown on outside click
-  document.addEventListener('click', (event) => {
-    const searchContainer = event.target.closest('#global-search-container');
-    if (!searchContainer) {
-      const results = document.getElementById('global-search-results');
-      if (results && !results.classList.contains('hidden')) {
-        results.classList.add('hidden');
-      }
-    }
-
-    const notifWrapper = event.target.closest('.notification-dropdown-wrapper');
-    if (!notifWrapper) {
-      const notifPanel = document.getElementById('notification-center-panel');
-      if (notifPanel && !notifPanel.classList.contains('hidden')) {
-        notifPanel.classList.add('hidden');
-      }
-    }
-  });
-
-  // Global window bindings for Notification Center & Search
-  window.NotificationManager = NotificationManager;
-  window.notificationManager = notificationManager;
-  window.toggleNotificationCenter = toggleNotificationCenter;
-  window.setNotificationCategory = setNotificationCategory;
-  window.markNotificationRead = markNotificationRead;
-  window.markAllNotificationsRead = markAllNotificationsRead;
-  window.clearAllNotifications = clearAllNotifications;
-  window.handleNotificationItemClick = handleNotificationItemClick;
-
-  window.GlobalSearchEngine = GlobalSearchEngine;
-  window.globalSearchEngine = globalSearchEngine;
-  window.executeSearchRoute = executeSearchRoute;
-  window.handleGlobalSearchInput = handleGlobalSearchInput;
-  window.handleGlobalSearchKeyDown = handleGlobalSearchKeyDown;
-
   // Initialize on DOM Ready
   document.addEventListener('DOMContentLoaded', () => {
     updateGaugeVisual(0);
     initDsaModule();
-    initHackathonsModule();
     initContextChatbot();
     updateAiStatusBadge();
-    notificationManager.updateBadge();
   });
 })();
-

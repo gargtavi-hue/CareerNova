@@ -31,61 +31,191 @@
     </div>
 
     <div class="auth-card">
-      <h1 class="auth-card-title" id="auth-title">Student Sign In & Onboarding</h1>
-      <p class="auth-card-subtitle" id="auth-subtitle">Enter your college, major, and graduation year to initialize your placement portal.</p>
+      <!-- Role Tabs -->
+      <div class="auth-tabs" id="auth-tabs" role="tablist">
+        <button type="button" class="auth-tab active" id="tab-student" onclick="setAuthRole('Student')">Student</button>
+        <button type="button" class="auth-tab" id="tab-tpo" onclick="setAuthRole('TPO')">TPO Officer</button>
+      </div>
 
-      <form id="auth-form" onsubmit="handleAuthSubmit(event)">
-        <div class="form-group">
-          <label class="form-label" for="auth-name">Full Name</label>
-          <input type="text" id="auth-name" class="form-input" placeholder="e.g. Alex Wright" value="Alex Wright" required>
-        </div>
+      <!-- Main Auth Card (Sign In / Register) -->
+      <div id="auth-main-card">
+        <h1 class="auth-card-title" id="auth-title">Student Sign In</h1>
+        <p class="auth-card-subtitle" id="auth-subtitle">Sign in to access your candidate placement dashboard.</p>
 
-        <div class="form-group">
-          <label class="form-label" for="auth-email">College Email Address</label>
-          <input type="email" id="auth-email" class="form-input" placeholder="alex.wright@university.edu" value="alex.wright@university.edu" required>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="auth-college">College / University Name</label>
-          <input type="text" id="auth-college" class="form-input" placeholder="e.g. Stanford University / IIT Bombay" value="Stanford University" required>
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-group">
-            <label class="form-label" for="auth-branch">Core Branch / Major</label>
-            <select id="auth-branch" class="form-input">
-              <option value="Computer Science & Engineering">Computer Science & Engineering</option>
-              <option value="Information Technology">Information Technology</option>
-              <option value="Artificial Intelligence & Data Science">AI & Data Science</option>
-              <option value="Electrical & Electronics Engineering">Electrical Engineering</option>
-            </select>
+        <form id="auth-form" onsubmit="handleAuthFormSubmit(event)">
+          <!-- Name (Shown in Register mode) -->
+          <div class="form-group hidden" id="group-auth-name">
+            <label class="form-label" for="auth-name">Full Name</label>
+            <input type="text" id="auth-name" class="form-input" placeholder="e.g. Alex Wright" value="Alex Wright">
           </div>
 
+          <!-- Email -->
           <div class="form-group">
-            <label class="form-label" for="auth-year">Graduation Year</label>
-            <select id="auth-year" class="form-input">
-              <option value="2026">2026</option>
-              <option value="2027">2027</option>
-              <option value="2028">2028</option>
-            </select>
+            <label class="form-label" id="auth-email-label" for="auth-email">College Email Address</label>
+            <input type="email" id="auth-email" class="form-input" placeholder="alex.wright@university.edu" value="alex.wright@university.edu" required>
           </div>
+
+          <!-- College (Shown in Register mode) -->
+          <div class="form-group hidden" id="group-auth-college">
+            <label class="form-label" for="auth-college">College / University Name</label>
+            <input type="text" id="auth-college" class="form-input" placeholder="e.g. Stanford University / IIT Bombay" value="Stanford University">
+          </div>
+
+          <!-- Student Fields: Branch & Year (Shown in Register mode for Student) -->
+          <div id="student-fields-group" class="hidden">
+            <div class="form-row-2">
+              <div class="form-group">
+                <label class="form-label" for="auth-branch">Core Branch / Major</label>
+                <select id="auth-branch" class="form-input">
+                  <option value="Computer Science & Engineering">Computer Science & Engineering</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Artificial Intelligence & Data Science">AI & Data Science</option>
+                  <option value="Electrical & Electronics Engineering">Electrical Engineering</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="auth-year">Graduation Year</label>
+                <select id="auth-year" class="form-input">
+                  <option value="2026">2026</option>
+                  <option value="2027">2027</option>
+                  <option value="2028">2028</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password & Confirm Password -->
+          <div class="form-group">
+            <label class="form-label" for="auth-password">Password</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" oninput="onPasswordInput(this.value)" required>
+              <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-password', this)" title="Show/Hide Password">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+            <div id="password-strength-hint" class="password-strength-hint"></div>
+          </div>
+
+          <div class="form-group hidden" id="group-confirm-password">
+            <label class="form-label" for="auth-confirm-password">Confirm Password</label>
+            <div class="password-input-wrapper">
+              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Re-enter password">
+              <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-confirm-password', this)" title="Show/Hide Password">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="auth-flex-row" id="row-forgot-password">
+            <span></span>
+            <button type="button" class="auth-link" onclick="showForgotPassword()">Forgot Password?</button>
+          </div>
+
+          <button type="submit"
+            class="btn-primary"
+            id="auth-submit-btn"
+            style="width: 100%; margin-top: 8px;">
+            Sign In to Portal
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          </button>
+        </form>
+
+        <div style="margin-top: 18px; text-align: center; font-size: 13px; color: var(--text-muted);">
+          <span id="auth-mode-switch-prompt">Don't have an account?</span>
+          <button type="button" class="auth-link" id="auth-mode-switch-btn" onclick="toggleAuthMode()" style="margin-left: 4px;">Create Account</button>
+        </div>
+      </div>
+
+      <!-- Verification Screen Card -->
+      <div id="auth-verify-card" class="hidden">
+        <h1 class="auth-card-title">Verify Your Email</h1>
+        <p class="auth-card-subtitle">We sent a 6-digit verification code to: <br><strong id="verify-email-target" style="color: var(--primary-accent); word-break: break-all;"></strong></p>
+
+        <form id="auth-verify-form" onsubmit="verifyEmailCode(event)">
+          <div class="form-group">
+            <label class="form-label" for="auth-verify-code">6-Digit Verification Code</label>
+            <input type="text" id="auth-verify-code" class="form-input verification-input" placeholder="Enter OTP code" maxlength="6" required>
+          </div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; margin-top: 8px;">
+            Verify Email & Enter Portal
+          </button>
+
+          <button type="button" class="btn-secondary-auth" onclick="resendVerificationCode()">
+            Resend Code to Email
+          </button>
+        </form>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <button type="button" class="auth-link" onclick="backToLogin()">← Back to Sign In</button>
+        </div>
+      </div>
+
+      <!-- Forgot Password Flow Card -->
+      <div id="auth-forgot-card" class="hidden">
+        <h1 class="auth-card-title">Password Recovery</h1>
+        <p class="auth-card-subtitle" id="forgot-subtitle">Step 1: Enter your registered email to receive a reset code.</p>
+
+        <!-- Step 1: Request Code -->
+        <div id="forgot-step-1">
+          <form onsubmit="sendPasswordResetCode(event)">
+            <div class="form-group">
+              <label class="form-label" for="auth-forgot-email">Registered Email Address</label>
+              <input type="email" id="auth-forgot-email" class="form-input" placeholder="your.name@university.edu" required>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 8px;">
+              Send Reset OTP to Email
+            </button>
+          </form>
         </div>
 
-        <button type="submit"
-          class="btn-primary"
-          id="auth-submit-btn"
-          style="width: 100%; margin-top: 8px;">
-          Initialize Candidate Portal
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-        </button>
-      </form>
+        <!-- Step 2: Enter Reset Code -->
+        <div id="forgot-step-2" class="hidden">
+          <form onsubmit="verifyResetCode(event)">
+            <div class="form-group">
+              <label class="form-label" for="auth-reset-code">6-Digit Reset Code</label>
+              <input type="text" id="auth-reset-code" class="form-input verification-input" placeholder="Enter OTP code" maxlength="6" required>
+            </div>
 
-      <div class="auth-presets">
-        <p>Quick Profile Sign-In Shortcuts</p>
-        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
-          <button type="button" class="preset-btn" onclick="demoSignIn('Student')">As Student (Alex • CS '26)</button>
-          <button type="button" class="preset-btn" onclick="demoSignIn('TPO')">As College TPO Officer</button>
-          <button type="button" class="preset-btn" style="background-color: var(--primary-light); color: var(--primary-accent); border-color: var(--primary-border); font-weight: 700;" onclick="demoSignIn('Student'); switchView('hackathons');">🚀 Open Hackathons & Drives</button>
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 8px;">
+              Verify Reset Code
+            </button>
+          </form>
+        </div>
+
+        <!-- Step 3: Create New Password -->
+        <div id="forgot-step-3" class="hidden">
+          <form onsubmit="saveNewPassword(event)">
+            <div class="form-group">
+              <label class="form-label" for="auth-new-password">New Password</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="auth-new-password" class="form-input" placeholder="e.g. Pass@1234" minlength="8" required>
+                <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-new-password', this)" title="Show/Hide Password">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="auth-confirm-new-password">Confirm New Password</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="auth-confirm-new-password" class="form-input" placeholder="Re-enter new password" required>
+                <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-confirm-new-password', this)" title="Show/Hide Password">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%; margin-top: 8px;">
+              Save & Reset Password
+            </button>
+          </form>
+        </div>
+
+        <div style="margin-top: 16px; text-align: center;">
+          <button type="button" class="auth-link" onclick="backToLogin()">← Back to Sign In</button>
         </div>
       </div>
     </div>
