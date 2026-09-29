@@ -2520,6 +2520,527 @@ In any distributed data store, you can only guarantee at most **two out of three
   }
 
   /* ==========================================================================
+     13. NOTIFICATION CENTER MODULE
+     ========================================================================== */
+  class NotificationManager {
+    constructor() {
+      this.currentFilter = 'all';
+      this.notifications = [
+        {
+          id: 1,
+          title: "Google placement drive opened",
+          description: "Google 2026 Campus Recruitment is now live. Explore interview rounds & preparation checklist.",
+          time: "Just now",
+          category: "deadlines",
+          type: "drive",
+          target: "Google",
+          isRead: false
+        },
+        {
+          id: 2,
+          title: "You have been shortlisted",
+          description: "Congratulations! Shortlisted for Amazon SDE-1 Technical Round. Try a mock interview session.",
+          time: "45 min ago",
+          category: "interviews",
+          type: "interview",
+          target: "Amazon",
+          isRead: false
+        },
+        {
+          id: 3,
+          title: "New hackathon added",
+          description: "Distributed Systems Sprint 2026 with $15k in prize pool is now open for university teams.",
+          time: "2 hours ago",
+          category: "hackathons",
+          type: "hackathon",
+          target: "Distributed Systems Sprint",
+          isRead: false
+        },
+        {
+          id: 4,
+          title: "New verified job alert",
+          description: "Stripe posted Frontend Engineer (New Grad 2026) — Remote / Hybrid.",
+          time: "4 hours ago",
+          category: "jobs",
+          type: "job",
+          target: "Frontend",
+          isRead: false
+        },
+        {
+          id: 5,
+          title: "Google drive deadline is tomorrow",
+          description: "Reminder: Submit your online assessment score before tomorrow 11:59 PM.",
+          time: "1 day ago",
+          category: "deadlines",
+          type: "drive",
+          target: "Google",
+          isRead: false
+        }
+      ];
+    }
+
+    getUnreadCount() {
+      return this.notifications.filter(item => !item.isRead).length;
+    }
+
+    markAsRead(id) {
+      const target = this.notifications.find(item => item.id === id);
+      if (target) {
+        target.isRead = true;
+        this.updateBadge();
+      }
+    }
+
+    markAllAsRead() {
+      this.notifications.forEach(item => (item.isRead = true));
+      this.updateBadge();
+      const panel = document.getElementById('notification-center-panel');
+      if (panel) {
+        this.renderUI(panel, this.currentFilter);
+      }
+      if (typeof showToast === 'function') {
+        showToast('All notifications marked as read.');
+      }
+    }
+
+    clearAll() {
+      this.notifications = [];
+      this.updateBadge();
+      const panel = document.getElementById('notification-center-panel');
+      if (panel) {
+        this.renderUI(panel, this.currentFilter);
+      }
+      if (typeof showToast === 'function') {
+        showToast('All notifications cleared.');
+      }
+    }
+
+    getByCategory(category) {
+      if (!category || category === "all") {
+        return this.notifications;
+      }
+      return this.notifications.filter(
+        item => item.category.toLowerCase() === category.toLowerCase()
+      );
+    }
+
+    updateBadge() {
+      if (typeof document === 'undefined') return;
+      const count = this.getUnreadCount();
+      const badge = document.getElementById('notification-badge');
+      if (badge) {
+        badge.textContent = count;
+        badge.style.display = count > 0 ? 'inline-block' : 'none';
+      }
+    }
+
+    handleNotificationClick(id) {
+      const item = this.notifications.find(n => n.id === id);
+      if (!item) return;
+
+      this.markAsRead(id);
+      const panel = document.getElementById('notification-center-panel');
+      if (panel) {
+        this.renderUI(panel, this.currentFilter);
+      }
+
+      if (item.type === 'drive') {
+        if (typeof switchView === 'function') switchView('applications');
+        if (typeof openCompanyPreparation === 'function' && item.target) openCompanyPreparation(item.target);
+      } else if (item.type === 'hackathon') {
+        if (typeof switchView === 'function') switchView('hackathons');
+      } else if (item.type === 'job') {
+        if (typeof switchView === 'function') switchView('jobs');
+        if (typeof filterJobs === 'function' && item.target) filterJobs(item.target);
+      } else if (item.type === 'interview') {
+        if (typeof openMockInterviewModal === 'function') {
+          openMockInterviewModal();
+        } else if (typeof switchView === 'function') {
+          switchView('aichat');
+        }
+      }
+
+      if (panel) panel.classList.add('hidden');
+    }
+
+    renderUI(containerElement, categoryFilter = "all") {
+      if (!containerElement) return;
+      this.currentFilter = categoryFilter;
+
+      const itemsToDisplay = this.getByCategory(categoryFilter);
+      const unreadCount = this.getUnreadCount();
+      this.updateBadge();
+
+      const categories = [
+        { id: 'all', label: 'All' },
+        { id: 'deadlines', label: 'Drives 🏢' },
+        { id: 'hackathons', label: 'Hackathons 🏆' },
+        { id: 'jobs', label: 'Jobs 💼' },
+        { id: 'interviews', label: 'Shortlists 🎯' }
+      ];
+
+      const filterTabsHtml = `
+        <div class="notification-tabs">
+          ${categories.map(cat => `
+            <button class="notification-tab-btn ${this.currentFilter === cat.id ? 'active' : ''}" 
+                    onclick="setNotificationCategory('${cat.id}')">
+              ${cat.label}
+            </button>
+          `).join('')}
+        </div>
+      `;
+
+      if (itemsToDisplay.length === 0) {
+        containerElement.innerHTML = `
+          <div class="notification-header">
+            <h3>🔔 Notifications <span class="badge">${unreadCount}</span></h3>
+            <div class="notification-actions">
+              <button onclick="markAllNotificationsRead()">Mark all read</button>
+              <button onclick="clearAllNotifications()">Clear all</button>
+            </div>
+          </div>
+          ${filterTabsHtml}
+          <div class="notification-empty">No notifications in this category</div>
+        `;
+        return;
+      }
+
+      const html = `
+        <div class="notification-header">
+          <h3>🔔 Notifications <span class="badge">${unreadCount}</span></h3>
+          <div class="notification-actions">
+            <button onclick="markAllNotificationsRead()">Mark all read</button>
+            <button onclick="clearAllNotifications()">Clear all</button>
+          </div>
+        </div>
+        ${filterTabsHtml}
+        <ul class="notification-list">
+          ${itemsToDisplay
+            .map(
+              item => `
+            <li class="notification-item ${item.isRead ? "read" : "unread"}" 
+                data-id="${item.id}" 
+                onclick="handleNotificationItemClick(${item.id})">
+              <div class="notification-content">
+                <div class="notification-title-row">
+                  <span class="notification-tag tag-${item.category}">${item.category.toUpperCase()}</span>
+                  <span class="notification-time">${item.time}</span>
+                </div>
+                <p class="notification-text">${item.title}</p>
+                ${item.description ? `<p class="notification-desc">${item.description}</p>` : ''}
+              </div>
+              ${!item.isRead ? `<button class="mark-read-btn" onclick="event.stopPropagation(); markNotificationRead(${item.id})">Read</button>` : ""}
+            </li>
+          `
+            )
+            .join("")}
+        </ul>
+      `;
+
+      containerElement.innerHTML = html;
+    }
+  }
+
+  const notificationManager = new NotificationManager();
+
+  function toggleNotificationCenter() {
+    const panel = document.getElementById('notification-center-panel');
+    if (!panel) return;
+    const isHidden = panel.classList.contains('hidden');
+
+    const searchDropdown = document.getElementById('global-search-results');
+    if (searchDropdown) searchDropdown.classList.add('hidden');
+
+    if (isHidden) {
+      notificationManager.renderUI(panel, notificationManager.currentFilter);
+      panel.classList.remove('hidden');
+    } else {
+      panel.classList.add('hidden');
+    }
+  }
+
+  function setNotificationCategory(category) {
+    const panel = document.getElementById('notification-center-panel');
+    notificationManager.renderUI(panel, category);
+  }
+
+  function markNotificationRead(id) {
+    notificationManager.markAsRead(id);
+    const panel = document.getElementById('notification-center-panel');
+    notificationManager.renderUI(panel, notificationManager.currentFilter);
+  }
+
+  function markAllNotificationsRead() {
+    notificationManager.markAllAsRead();
+  }
+
+  function clearAllNotifications() {
+    notificationManager.clearAll();
+  }
+
+  function handleNotificationItemClick(id) {
+    notificationManager.handleNotificationClick(id);
+  }
+
+  document.addEventListener('click', (event) => {
+    const wrapper = event.target.closest('.notification-dropdown-wrapper');
+    if (!wrapper) {
+      const panel = document.getElementById('notification-center-panel');
+      if (panel && !panel.classList.contains('hidden')) {
+        panel.classList.add('hidden');
+      }
+    }
+  });
+
+  /* ==========================================================================
+     14. GLOBAL SEARCH & SMART ROUTER MODULE
+     ========================================================================== */
+  class GlobalSearchEngine {
+    constructor() {
+      this.database = {
+        companies: [
+          { name: "Google Placement Roadmap", tag: "Google", desc: "4 Rounds • DSA & System Design" },
+          { name: "Microsoft Technical Rounds", tag: "Microsoft", desc: "3 Rounds • Cloud & Algorithms" },
+          { name: "Amazon Preparation", tag: "Amazon", desc: "4 Rounds • Leadership Principles & DSA" },
+          { name: "NVIDIA Systems Track", tag: "NVIDIA", desc: "3 Rounds • C++ & Concurrency" },
+          { name: "Infosys Specialist Programmer", tag: "Infosys", desc: "2 Rounds • Speed Coding" },
+          { name: "TCS Digital Assessment", tag: "TCS", desc: "2 Rounds • Aptitude & CS Core" }
+        ],
+        jobs: [
+          { name: "Amazon Software Engineer", tag: "Amazon", badge: "New Grad", role: "Backend" },
+          { name: "Google Frontend Developer", tag: "Google", badge: "Verified", role: "Frontend" },
+          { name: "Microsoft Cloud Engineer", tag: "Microsoft", badge: "Full-Time", role: "Fullstack" },
+          { name: "Stripe Full-Stack Engineer", tag: "Stripe", badge: "Remote", role: "Fullstack" },
+          { name: "SDE-1 Summer Internship", tag: "General", badge: "Internship", role: "Internships" }
+        ],
+        dsa: [
+          { name: "Two Sum", tag: "Array", difficulty: "Easy", id: 1 },
+          { name: "Valid Parentheses", tag: "Stack", difficulty: "Easy", id: 2 },
+          { name: "Merge Two Sorted Lists", tag: "Linked List", difficulty: "Easy", id: 3 },
+          { name: "Best Time to Buy & Sell Stock", tag: "Array", difficulty: "Easy", id: 4 },
+          { name: "Longest Substring Without Repeating", tag: "String", difficulty: "Medium", id: 5 },
+          { name: "3Sum", tag: "Two Pointers", difficulty: "Medium", id: 6 },
+          { name: "Binary Tree Level Order Traversal", tag: "Tree", difficulty: "Medium", id: 7 },
+          { name: "Course Schedule", tag: "Graph", difficulty: "Medium", id: 8 },
+          { name: "LRU Cache", tag: "Design", difficulty: "Medium", id: 9 },
+          { name: "Trapping Rain Water", tag: "Dynamic Programming", difficulty: "Hard", id: 10 }
+        ],
+        hackathons: [
+          { name: "Smart India Hackathon 2026", tag: "Open Innovation", prize: "₹1,00,000" },
+          { name: "Flipkart GRiD 7.0 - SDE Sprint", tag: "Web Development", prize: "₹5,00,000" },
+          { name: "Google Cloud GenAI Challenge", tag: "AI & ML", prize: "₹16,50,000" },
+          { name: "TCS HackQuest Season 10", tag: "Cybersecurity", prize: "₹5,00,000" },
+          { name: "Distributed Systems Sprint", tag: "Systems & Infra", prize: "₹12,50,000" },
+          { name: "AWS Cross-Platform Mobile Drive", tag: "App Development", prize: "₹3,50,000" },
+          { name: "Polygon Web3 BUIDL Marathon", tag: "Blockchain", prize: "₹20,00,000" },
+          { name: "Intel Edge AI & IoT Sprint", tag: "IoT", prize: "₹2,00,000" }
+        ]
+      };
+    }
+
+    search(query) {
+      const term = (query || '').trim().toLowerCase();
+      if (!term) return { companies: [], jobs: [], dsa: [], hackathons: [] };
+
+      const isCompanyIntent = /company|companies|drive|drives|placement|roadmap/i.test(term);
+      const isJobIntent = /job|jobs|intern|internship|hiring|career|role/i.test(term);
+      const isDsaIntent = /dsa|problem|algo|algorithm|leetcode|sheet|data structure/i.test(term);
+      const isHackathonIntent = /hackathon|sprint|challenge|prize|event/i.test(term);
+
+      return {
+        companies: this.database.companies.filter(
+          c => isCompanyIntent || c.name.toLowerCase().includes(term) || c.tag.toLowerCase().includes(term)
+        ),
+        jobs: this.database.jobs.filter(
+          j => isJobIntent || j.name.toLowerCase().includes(term) || j.tag.toLowerCase().includes(term) || (j.role && j.role.toLowerCase().includes(term))
+        ),
+        dsa: this.database.dsa.filter(
+          d => isDsaIntent || d.name.toLowerCase().includes(term) || d.tag.toLowerCase().includes(term) || (d.difficulty && d.difficulty.toLowerCase().includes(term))
+        ),
+        hackathons: this.database.hackathons.filter(
+          h => isHackathonIntent || h.name.toLowerCase().includes(term) || h.tag.toLowerCase().includes(term)
+        )
+      };
+    }
+
+    renderResults(results, resultsContainerElement) {
+      if (!resultsContainerElement) return;
+
+      const totalResults =
+        results.companies.length + results.jobs.length + results.dsa.length + results.hackathons.length;
+
+      if (totalResults === 0) {
+        resultsContainerElement.innerHTML = `
+          <div class="search-results-card">
+            <div class="search-empty">No results found matching your search.</div>
+          </div>
+        `;
+        resultsContainerElement.classList.remove('hidden');
+        return;
+      }
+
+      let html = `<div class="search-results-card">`;
+
+      if (results.companies.length > 0) {
+        html += `
+          <div class="search-category">
+            <h4>🏢 Target Companies</h4>
+            <ul>
+              ${results.companies
+                .map(
+                  c => `
+                <li onclick="executeSearchRoute('company', '${c.tag}', '${escapeHtml(c.name)}')">
+                  <span>&rarr; <strong>${c.name}</strong></span>
+                  <span class="search-item-badge">${c.tag}</span>
+                </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`;
+      }
+
+      if (results.dsa.length > 0) {
+        html += `
+          <div class="search-category">
+            <h4>🧩 DSA Practice Problems</h4>
+            <ul>
+              ${results.dsa
+                .map(
+                  d => `
+                <li onclick="executeSearchRoute('dsa', '${d.id || d.name}', '${escapeHtml(d.name)}')">
+                  <span>&rarr; <strong>${d.name}</strong> (${d.tag})</span>
+                  <span class="search-item-badge">${d.difficulty}</span>
+                </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`;
+      }
+
+      if (results.jobs.length > 0) {
+        html += `
+          <div class="search-category">
+            <h4>💼 Verified Job Openings</h4>
+            <ul>
+              ${results.jobs
+                .map(
+                  j => `
+                <li onclick="executeSearchRoute('jobs', '${j.role || j.tag}', '${escapeHtml(j.name)}')">
+                  <span>&rarr; <strong>${j.name}</strong></span>
+                  <span class="search-item-badge">${j.badge || j.tag}</span>
+                </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`;
+      }
+
+      if (results.hackathons.length > 0) {
+        html += `
+          <div class="search-category">
+            <h4>🏆 Hackathons & Drives</h4>
+            <ul>
+              ${results.hackathons
+                .map(
+                  h => `
+                <li onclick="executeSearchRoute('hackathons', '${h.name}', '${escapeHtml(h.name)}')">
+                  <span>&rarr; <strong>${h.name}</strong></span>
+                  <span class="search-item-badge">${h.prize}</span>
+                </li>`
+                )
+                .join("")}
+            </ul>
+          </div>`;
+      }
+
+      html += `</div>`;
+      resultsContainerElement.innerHTML = html;
+      resultsContainerElement.classList.remove('hidden');
+    }
+  }
+
+  const globalSearchEngine = new GlobalSearchEngine();
+
+  function executeSearchRoute(category, target) {
+    const resultsContainer = document.getElementById('global-search-results');
+    if (resultsContainer) resultsContainer.classList.add('hidden');
+
+    const searchInput = document.getElementById('global-search-input');
+    if (searchInput) searchInput.value = '';
+
+    if (category === 'company') {
+      if (typeof switchView === 'function') switchView('applications');
+      if (typeof openCompanyPreparation === 'function') openCompanyPreparation(target);
+    } else if (category === 'dsa') {
+      if (typeof switchView === 'function') switchView('dsa');
+      const problemId = parseInt(target, 10);
+      if (!isNaN(problemId) && typeof openDsaProblem === 'function') {
+        openDsaProblem(problemId);
+      } else {
+        const dsaSearch = document.getElementById('dsa-search');
+        if (dsaSearch) {
+          dsaSearch.value = target;
+          dsaSearch.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      }
+    } else if (category === 'jobs') {
+      if (typeof switchView === 'function') switchView('jobs');
+      if (typeof filterJobs === 'function') filterJobs(target);
+    } else if (category === 'hackathons') {
+      if (typeof switchView === 'function') switchView('hackathons');
+    }
+  }
+
+  function handleGlobalSearchInput(query) {
+    const container = document.getElementById('global-search-results');
+    if (!container) return;
+
+    if (!query || !query.trim()) {
+      container.classList.add('hidden');
+      return;
+    }
+
+    const results = globalSearchEngine.search(query);
+    globalSearchEngine.renderResults(results, container);
+  }
+
+  function handleGlobalSearchKeyDown(event) {
+    if (event.key === 'Escape') {
+      const container = document.getElementById('global-search-results');
+      if (container) container.classList.add('hidden');
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      const query = event.target.value.trim();
+      if (!query) return;
+
+      const results = globalSearchEngine.search(query);
+      if (results.companies.length > 0) {
+        executeSearchRoute('company', results.companies[0].tag);
+      } else if (results.dsa.length > 0) {
+        executeSearchRoute('dsa', results.dsa[0].id || results.dsa[0].name);
+      } else if (results.jobs.length > 0) {
+        executeSearchRoute('jobs', results.jobs[0].role || results.jobs[0].tag);
+      } else if (results.hackathons.length > 0) {
+        executeSearchRoute('hackathons', results.hackathons[0].name);
+      } else if (typeof handleGlobalSearch === 'function') {
+        handleGlobalSearch(query);
+        const container = document.getElementById('global-search-results');
+        if (container) container.classList.add('hidden');
+      }
+    }
+  }
+
+  document.addEventListener('click', (event) => {
+    const searchContainer = event.target.closest('#global-search-container');
+    if (!searchContainer) {
+      const results = document.getElementById('global-search-results');
+      if (results && !results.classList.contains('hidden')) {
+        results.classList.add('hidden');
+      }
+    }
+  });
+
+  /* ==========================================================================
      15. GLOBAL REGISTRATIONS & INITIALIZATION
      ========================================================================== */
   window.state = state;
@@ -2594,11 +3115,31 @@ In any distributed data store, you can only guarantee at most **two out of three
   window.initContextChatbot = initContextChatbot;
   window.refreshContextHelp = refreshContextHelp;
 
+  // Notification Center
+  window.NotificationManager = NotificationManager;
+  window.notificationManager = notificationManager;
+  window.toggleNotificationCenter = toggleNotificationCenter;
+  window.setNotificationCategory = setNotificationCategory;
+  window.markNotificationRead = markNotificationRead;
+  window.markAllNotificationsRead = markAllNotificationsRead;
+  window.clearAllNotifications = clearAllNotifications;
+  window.handleNotificationItemClick = handleNotificationItemClick;
+
+  // Global Search & Routing
+  window.GlobalSearchEngine = GlobalSearchEngine;
+  window.globalSearchEngine = globalSearchEngine;
+  window.executeSearchRoute = executeSearchRoute;
+  window.handleGlobalSearchInput = handleGlobalSearchInput;
+  window.handleGlobalSearchKeyDown = handleGlobalSearchKeyDown;
+
   // Initialize on DOM Ready
   document.addEventListener('DOMContentLoaded', () => {
     updateGaugeVisual(0);
     initDsaModule();
     initContextChatbot();
     updateAiStatusBadge();
+    if (notificationManager && typeof notificationManager.updateBadge === 'function') {
+      notificationManager.updateBadge();
+    }
   });
 })();
