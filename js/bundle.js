@@ -1128,27 +1128,6 @@
   };
 
   /* ==========================================================================
-     3. TOAST CONTROLLER
-     ========================================================================== */
-  let toastTimer = null;
-  function showToast(message) {
-    const toast = document.getElementById('toast-notification');
-    if (!toast) return;
-
-    toast.innerText = message;
-    toast.classList.remove('hidden');
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0)';
-
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
-      setTimeout(() => toast.classList.add('hidden'), 250);
-    }, 3200);
-  }
-
-  /* ==========================================================================
      4. DASHBOARD & GAUGE VISUALS
      ========================================================================== */
   function updateGaugeVisual(score) {
@@ -1271,17 +1250,6 @@
     }
   }
 
-  /* ==========================================================================
-     6. AUTHENTICATION & DEMO PROFILES
-     ========================================================================== */
-  const API_BASE_URL = (window.location.protocol.startsWith('http') && window.location.port === '5000') 
-    ? '' 
-    : 'http://localhost:5000';
-
-  let currentRole = 'Student'; // 'Student' | 'TPO'
-  let authMode = 'LOGIN';       // 'LOGIN' | 'REGISTER'
-  let pendingVerificationEmail = '';
-  let pendingResetToken = '';
 
   function checkPasswordStrength(password) {
     if (!password || password.length < 8) return { valid: false, message: 'Must be at least 8 characters long.' };
