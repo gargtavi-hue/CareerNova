@@ -129,8 +129,8 @@
         <div class="nav-category" style="margin-top: 14px;">Tools & Institution</div>
 
         <div class="nav-item" data-view="aichat" onclick="switchView('aichat')">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-          <span>AI Placement Coach</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          <span>Nova AI (Chatbot) ✨</span>
         </div>
 
         <div class="nav-item" data-view="jobs" onclick="switchView('jobs')">
@@ -489,9 +489,7 @@
                   🎤 Mock Interview
                 </button>
 
-                <button onclick="switchView('aichat')">
-                  🤖 AI Placement Coach
-                </button>
+                
               </div>
             </aside>
 
@@ -757,85 +755,89 @@
           </div>
         </section>
 
-
-        
-
         <!-- ==================================================================
-             VIEW 5: AI CHAT ASSISTANT
+             VIEW 5: NOVA AI CHATBOT 
              ================================================================== -->
-
-
         <section id="view-aichat" class="page-view hidden">
-          <div class="page-header">
+          <div class="page-header" style="margin-bottom: 20px;">
             <div>
-              <h1 class="page-title">AI Placement Coach</h1>
-              <p class="page-description">Get instant feedback on STAR behavioral answers, system design trade-offs, and algorithms.</p>
+              <h1 class="page-title">Nova AI Assistant ✨</h1>
+              <p class="page-description"> Chat, write code, debug errors, solve DSA, or brainstorm.</p>
             </div>
           </div>
 
-          <div class="chat-wrapper" data-help-section="messages">
+          <div class="chat-wrapper">
             <div class="chat-header">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="auth-brand-icon" style="width: 28px; height: 28px; font-size: 12px;">AI</div>
-                <div>
-                  <strong style="font-size: 14px;">Nova Placement Advisor</strong>
-                  <div style="font-size: 11px; color: var(--text-muted);">Standing by for session</div>
+              <div class="chat-brand-meta">
+                <div class="chat-brand-icon">✨</div>
+                <div class="chat-title-group">
+                  <strong>Nova AI</strong>
+                  <div class="chat-status-subtext" id="coach-mode-indicator">
+                    Nova AI • Live Web Search Active
+                  </div>
                 </div>
               </div>
-              <span class="badge badge-green">Ready</span>
+              <div class="chat-header-actions">
+                <button class="chat-btn-pill" onclick="resetChatSession()" title="Start a fresh conversation">
+                  ➕ New Chat
+                </button>
+                <button class="chat-btn-pill" onclick="openAiSettingsModal()" title="Connect your Gemini API Key">
+                  ⚙️ AI Settings
+                </button>
+                <span class="badge badge-green" id="coach-status-badge">Web Online</span>
+              </div>
             </div>
 
             <div class="chat-messages" id="chat-box">
-              <div style="text-align: center; margin: auto; padding: 40px; color: var(--text-muted);">
-                <div style="font-size: 32px; margin-bottom: 12px;">🤖</div>
-                <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">AI Placement Coach Ready</h3>
-                <p style="font-size: 13px; max-width: 420px; margin: 0 auto;">Select a prompt shortcut below or type your technical/behavioral question to begin your preparation session.</p>
+              <div class="chat-empty-state" id="chat-empty-state">
+                <div class="chat-welcome-sparkle">✨</div>
+                <h2 class="chat-welcome-title">Where shall we begin today?</h2>
+                <p class="chat-welcome-desc">Ask any question, write & debug code, solve algorithms, prepare for interviews, or explore live web knowledge.</p>
+
+                <div class="chat-prompt-grid">
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('Implement a Trie (Prefix Tree) in Python with insert and search methods, including complexity analysis.')">
+                    <div class="chat-prompt-card-header">💻 Write Code & Algorithms</div>
+                    <div class="chat-prompt-card-desc">Implement a Trie with insert and search methods + Big-O analysis.</div>
+                  </div>
+
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('Explain the system design of a distributed Rate Limiter using Token Bucket and Redis.')">
+                    <div class="chat-prompt-card-header">🏗️ System Design Blueprint</div>
+                    <div class="chat-prompt-card-desc">Explore rate limiters with token buckets, API gateways, and Redis.</div>
+                  </div>
+
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('Give me a high-impact STAR framework response for: Tell me about a time you handled a difficult production bug.')">
+                    <div class="chat-prompt-card-header">🎤 STAR Behavioral Prep</div>
+                    <div class="chat-prompt-card-desc">Structure answers for handling tight deadlines and production bugs.</div>
+                  </div>
+
+                  <div class="chat-prompt-card" onclick="sendSuggestedChat('What are the core trade-offs between SQL and NoSQL databases for high-scale microservices?')">
+                    <div class="chat-prompt-card-header">🗄️ SQL vs NoSQL Trade-offs</div>
+                    <div class="chat-prompt-card-desc">Compare ACID relational databases vs horizontal NoSQL clusters.</div>
+                  </div>
+                </div>
               </div>
             </div>
 
-          <div class="coach-shortcuts">
-
-  <button class="preset-btn"
-    onclick="sendSuggestedChat('Evaluate my STAR response for handling tight deadlines.')">
-    ⭐ STAR Feedback
-  </button>
-
-  <button class="preset-btn"
-    onclick="sendSuggestedChat('Explain standard trade-offs between SQL vs NoSQL at scale.')">
-    🗄️ SQL vs NoSQL
-  </button>
-
-  <button class="preset-btn"
-    onclick="sendSuggestedChat('Give me a 5-minute system design checklist for rate limiters.')">
-    🏗️ System Design
-  </button>
-
-  <button class="preset-btn"
-    onclick="sendSuggestedChat('Explain the Two Sum problem and its optimal approach.')">
-    🧩 DSA Help
-  </button>
-
-  <button class="preset-btn"
-    onclick="sendSuggestedChat('Give me common HR interview questions and how I should answer them.')">
-    🎤 HR Prep
-  </button>
-
-  <button class="preset-btn"
-    onclick="sendSuggestedChat('How should I explain my college project in an interview?')">
-    📁 Project Prep
-  </button>
-
-</div>
             <div class="chat-input-area">
-              <input type="text" class="chat-input" id="chat-input" placeholder="Ask your placement coach a question..." onkeypress="if(event.key==='Enter') sendChatMessage()">
-              <button class="btn-primary" style="width: auto; padding: 0 20px;" onclick="sendChatMessage()">Send</button>
+              <div class="chat-input-box">
+                <textarea 
+                  id="chat-input" 
+                  class="chat-textarea" 
+                  rows="1" 
+                  placeholder="Message Nova AI... (Press Enter to send, Shift+Enter for new line)"
+                  oninput="handleChatInputInput(event)"
+                  onkeydown="handleChatInputKeyDown(event)"></textarea>
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()" title="Send Message">
+                  ➤
+                </button>
+              </div>
+              <div class="chat-footer-disclaimer">
+                Nova AI can answer questions across coding, system design, and general topics using Generative AI & Live Web Search.
+              </div>
             </div>
           </div>
         </section>
 
-
-        
-              
         <!-- ==================================================================
              VIEW 6: JOBS SUB-SCREEN
              ================================================================== -->
@@ -1373,12 +1375,67 @@
     </div>
   </div>
 
+  <!-- AI SETTINGS MODAL -->
+  <div id="ai-settings-modal" class="modal-backdrop hidden">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-title">⚙️ AI Chatbot Settings</h3>
+          <p class="mock-subtitle">Connect Google Gemini to answer any complex coding, system design, or interview question.</p>
+        </div>
+        <button class="btn-icon-ghost" onclick="closeAiSettingsModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="gemini-api-key-input">Google Gemini API Key</label>
+          <input type="password" id="gemini-api-key-input" class="form-input" placeholder="AIzaSy...">
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px; line-height: 1.5;">
+            🔑 <strong>Get a free key:</strong> Visit <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color: var(--primary-accent); text-decoration: underline;">Google AI Studio</a> (free tier, no credit card required).
+            <br>
+            🌐 <strong>Default mode:</strong> If no key is set, the chatbot automatically uses <strong>Live Web Search</strong> (Wikipedia & DuckDuckGo) for real-time answers.
+          </div>
+        </div>
+
+        <div id="ai-key-status" style="margin-top: 14px; padding: 10px 14px; border-radius: 8px; font-size: 12px; background: #f8fafc; border: 1px solid #e2e8f0;">
+          Checking AI key status...
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="clearAiKey()">Remove Key</button>
+        <button class="btn-primary" onclick="saveAiKey()">Save & Activate AI →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING CONTEXT-AWARE HELP WIDGET -->
+  <button id="context-help-toggle" class="context-help-toggle-btn" aria-expanded="false" title="Page & Section Help">
+    <span>💡 Help</span>
+  </button>
+
+  <div id="context-help-panel" class="context-help-panel hidden" role="dialog" aria-labelledby="context-help-title">
+    <div class="context-help-header">
+      <div>
+        <h4 id="context-help-title">Context Help</h4>
+        <small id="context-help-location">Current page</small>
+      </div>
+      <button id="context-help-close" class="context-help-close-btn" title="Close Help">✕</button>
+    </div>
+    <div id="context-help-messages" class="context-help-messages">
+      <p class="context-help-message assistant">Hi! I'm your context assistant. Ask me anything about this page or section.</p>
+    </div>
+    <form id="context-help-form" class="context-help-form">
+      <input type="text" id="context-help-input" placeholder="Ask about this section..." autocomplete="off">
+      <button type="submit" class="btn-primary" style="padding: 6px 12px; font-size: 12px;">Ask</button>
+    </form>
+  </div>
+
   <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
   <div id="toast-notification" class="toast hidden"></div>
 
-  <!-- Application Script Module Entry Point -->
-  <script type="module" src="js/app.js"></script>
-  <script src="js/modules/context-chatbot.js"></script>
+  <!-- Universal Application Bundle (Runs seamlessly on file:// and http://) -->
+  <script src="js/bundle.js"></script>
 
 
 </body>
