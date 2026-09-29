@@ -118,7 +118,6 @@ careernova/
 │       ├── jobs.js                 # Job filter engine & bookmark toggling
 │       ├── hackathons.js           # Hackathon filter logic & registration
 │       ├── chatbot.js              # Live Web Search (Wikipedia/DDG) & Google Gemini AI engine
-│       ├── coach.js                # Coach interface integration alias
 │       ├── context-chatbot.js      # Context-aware floating assistant
 │       ├── mock-interview.js       # Interactive mock interview session & report evaluator
 │       ├── tpo.js                  # Campus placement roster table filtering
