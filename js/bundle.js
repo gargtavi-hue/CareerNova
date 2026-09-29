@@ -732,7 +732,7 @@
 
     const tpoNavItem = document.querySelector('.nav-item[data-view="college"]');
     if (tpoNavItem) {
-      tpoNavItem.style.display = user.role === 'TPO' ? 'flex' : 'none';
+      tpoNavItem.style.display = 'flex';
     }
   }
 
@@ -1192,13 +1192,7 @@
      5. NAVIGATION & VIEW ROUTING
      ========================================================================== */
   function switchView(viewId) {
-    if (viewId === 'college' && state.currentUser && state.currentUser.role !== 'TPO') {
-      showToast('Access Restricted: College TPO Portal is strictly for verified TPO Officers.');
-      switchView('dashboard');
-      return;
-    }
-
-    if (viewId === 'college' && state.currentUser && state.currentUser.role === 'TPO') {
+    if (viewId === 'college') {
       loadTpoRosterData();
     }
 
@@ -1689,10 +1683,10 @@
         : `${user.college} • ${user.branch} '${(user.year || '').slice(-2)}`;
     }
 
-    // STRICT ROLE SEPARATION: Hide TPO Portal from Students
+    // Always show TPO Portal in navigation sidebar after login
     const tpoNavItem = document.querySelector('.nav-item[data-view="college"]');
     if (tpoNavItem) {
-      tpoNavItem.style.display = user.role === 'TPO' ? 'flex' : 'none';
+      tpoNavItem.style.display = 'flex';
     }
   }
 

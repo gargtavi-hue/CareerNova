@@ -703,9 +703,9 @@ function applyUserToUI(user) {
       : `${user.college} • ${user.branch} '${(user.year || '').slice(-2)}`;
   }
 
-  // STRICT ROLE SEPARATION: Hide TPO Portal from Students
+  // Always show TPO Portal in navigation sidebar after login
   const tpoNavItem = document.querySelector('.nav-item[data-view="college"]');
   if (tpoNavItem) {
-    tpoNavItem.style.display = user.role === 'TPO' ? 'flex' : 'none';
+    tpoNavItem.style.display = 'flex';
   }
 }
