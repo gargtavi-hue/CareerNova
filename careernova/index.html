@@ -758,18 +758,22 @@
         </section>
 
 
+        
+
         <!-- ==================================================================
              VIEW 5: AI CHAT ASSISTANT
              ================================================================== -->
+
+
         <section id="view-aichat" class="page-view hidden">
-          <div class="page-header" style="margin-bottom: 24px;">
+          <div class="page-header">
             <div>
               <h1 class="page-title">AI Placement Coach</h1>
               <p class="page-description">Get instant feedback on STAR behavioral answers, system design trade-offs, and algorithms.</p>
             </div>
           </div>
 
-          <div class="chat-wrapper">
+          <div class="chat-wrapper" data-help-section="messages">
             <div class="chat-header">
               <div style="display: flex; align-items: center; gap: 10px;">
                 <div class="auth-brand-icon" style="width: 28px; height: 28px; font-size: 12px;">AI</div>
@@ -789,32 +793,39 @@
               </div>
             </div>
 
-            <div class="coach-shortcuts">
-              <button class="preset-btn" onclick="sendSuggestedChat('Evaluate my STAR response for handling tight deadlines.')">
-                ⭐ STAR Feedback
-              </button>
+          <div class="coach-shortcuts">
 
-              <button class="preset-btn" onclick="sendSuggestedChat('Explain standard trade-offs between SQL vs NoSQL at scale.')">
-                🗄️ SQL vs NoSQL
-              </button>
+  <button class="preset-btn"
+    onclick="sendSuggestedChat('Evaluate my STAR response for handling tight deadlines.')">
+    ⭐ STAR Feedback
+  </button>
 
-              <button class="preset-btn" onclick="sendSuggestedChat('Give me a 5-minute system design checklist for rate limiters.')">
-                🏗️ System Design
-              </button>
+  <button class="preset-btn"
+    onclick="sendSuggestedChat('Explain standard trade-offs between SQL vs NoSQL at scale.')">
+    🗄️ SQL vs NoSQL
+  </button>
 
-              <button class="preset-btn" onclick="sendSuggestedChat('Explain the Two Sum problem and its optimal approach.')">
-                🧩 DSA Help
-              </button>
+  <button class="preset-btn"
+    onclick="sendSuggestedChat('Give me a 5-minute system design checklist for rate limiters.')">
+    🏗️ System Design
+  </button>
 
-              <button class="preset-btn" onclick="sendSuggestedChat('Give me common HR interview questions and how I should answer them.')">
-                🎤 HR Prep
-              </button>
+  <button class="preset-btn"
+    onclick="sendSuggestedChat('Explain the Two Sum problem and its optimal approach.')">
+    🧩 DSA Help
+  </button>
 
-              <button class="preset-btn" onclick="sendSuggestedChat('How should I explain my college project in an interview?')">
-                📁 Project Prep
-              </button>
-            </div>
+  <button class="preset-btn"
+    onclick="sendSuggestedChat('Give me common HR interview questions and how I should answer them.')">
+    🎤 HR Prep
+  </button>
 
+  <button class="preset-btn"
+    onclick="sendSuggestedChat('How should I explain my college project in an interview?')">
+    📁 Project Prep
+  </button>
+
+</div>
             <div class="chat-input-area">
               <input type="text" class="chat-input" id="chat-input" placeholder="Ask your placement coach a question..." onkeypress="if(event.key==='Enter') sendChatMessage()">
               <button class="btn-primary" style="width: auto; padding: 0 20px;" onclick="sendChatMessage()">Send</button>
@@ -823,6 +834,8 @@
         </section>
 
 
+        
+              
         <!-- ==================================================================
              VIEW 6: JOBS SUB-SCREEN
              ================================================================== -->
@@ -1365,6 +1378,8 @@
 
   <!-- Application Script Module Entry Point -->
   <script type="module" src="js/app.js"></script>
+  <script src="js/context-chatbot.js"></script>
+
 
 </body>
 </html>
