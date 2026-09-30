@@ -6,6 +6,7 @@
   <title>CareerNova | Candidate & Campus Placement Platform</title>
   <!-- Modular Stylesheet Bundle -->
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="css/applications.css">
 </head>
 <body>
 
@@ -250,6 +251,14 @@
         <div class="nav-item" data-view="applications" onclick="switchView('applications')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span>Top Tech Applications</span>
+        </div>
+
+        <div class="nav-item" data-view="application-tracker" onclick="switchView('application-tracker')">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a3 3 0 006 0M9 5h6"/>
+          </svg>
+           <span>Application Tracker</span>
         </div>
 
         <div class="nav-item" data-view="hackathons" onclick="switchView('hackathons')">
@@ -808,8 +817,110 @@
 
           </div>
         </section>
+        
+        <!-- ==================================================================
+             VIEW 3.5: APPLICATION TRACKER
+             ================================================================== -->
+        <section id="view-application-tracker" class="page-view hidden">
 
+         <div class="page-header">
+          <div>
+            <div class="page-eyebrow">APPLICATION MANAGEMENT</div>
+            <h1 class="page-title">Application Tracker</h1>
+            <p class="page-description">
+             Track your job and internship applications in one place.
+            </p>
+          </div>
 
+          <button id="add-app-btn" type="button" class="btn-primary">
+            + Add Application
+          </button>
+         </div>
+
+         <!-- Tracker Statistics -->
+         <div class="tracker-stats">
+          <div class="tracker-stat-card">
+           <span>Total Applications</span>
+           <strong id="tracker-total">0</strong>
+          </div>
+          <div class="tracker-stat-card">
+           <span>Applied</span>
+           <strong id="tracker-applied">0</strong>
+          </div>
+          <div class="tracker-stat-card">
+           <span>Interviews</span>
+           <strong id="tracker-interviews">0</strong>
+          </div>
+          <div class="tracker-stat-card">
+           <span>Offers</span>
+           <strong id="tracker-offers">0</strong>
+          </div>
+          <div class="tracker-stat-card">
+           <span>Rejected</span>
+           <strong id="tracker-rejected">0</strong>
+          </div>
+          </div>
+
+          <!-- Search & Filter -->
+          <div class="tracker-toolbar">
+           <input
+            type="text"
+            id="application-search"
+            class="form-input"
+            placeholder="Search company or role..."
+           />
+
+           <select id="application-status-filter" class="form-input">
+            <option value="all">All Statuses</option>
+            <option value="Applied">Applied</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer">Offer</option>
+            <option value="Rejected">Rejected</option>
+           </select>
+          </div>
+
+          <!-- Applications list (table is rendered here by JS) -->
+          <div id="applications-list" class="applications-list"></div>
+
+          <!-- Add Application Modal -->
+          <div id="app-modal" class="modal-overlay hidden">
+           <div class="modal-content">
+            <div class="modal-header">
+             <h3>Add Application</h3>
+             <button type="button" id="close-modal-btn" class="close-btn" aria-label="Close">&times;</button>
+            </div>
+
+            <form id="app-form">
+             <div class="form-group">
+              <input type="text" id="modal-company" class="form-input" placeholder="Company Name *" required />
+             </div>
+             <div class="form-group">
+              <input type="text" id="modal-role" class="form-input" placeholder="Role *" required />
+             </div>
+             <div class="form-group">
+              <input type="date" id="modal-date" class="form-input" />
+             </div>
+             <div class="form-group">
+              <input type="text" id="modal-source" class="form-input" placeholder="Source (e.g. LinkedIn, Referral)" />
+             </div>
+             <div class="form-group">
+              <select id="modal-status" class="form-input">
+               <option value="Applied">Applied</option>
+               <option value="Interview">Interview</option>
+               <option value="Offer">Offer</option>
+               <option value="Rejected">Rejected</option>
+              </select>
+             </div>
+
+             <div class="modal-actions">
+              <button type="button" id="cancel-modal-btn" class="btn-secondary">Cancel</button>
+              <button type="submit" class="btn-primary">Save Application</button>
+             </div>
+            </form>
+           </div>
+          </div>
+
+        </section>
         <!-- ==================================================================
              VIEW 4: HACKATHONS SUB-SCREEN
              ================================================================== -->
@@ -2413,9 +2524,12 @@
 
   <!-- FLOATING TOAST NOTIFICATION CONTAINER -->
   <div id="toast-notification" class="toast hidden"></div>
-
+  
+  
   <!-- Universal Application Bundle (Runs seamlessly on file:// and http://) -->
-  <script src="js/bundle.js"></script>
+    <script src="js/bundle.js"></script>
+    <script type="module" src="js/app.js"></script>
+    <script src="js/tracker.js"></script>
 
 
 </body>
