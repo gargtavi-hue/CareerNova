@@ -1,4 +1,4 @@
-/* CareerNova - Real Authentication & Email OTP Module */
+/* CareerNova - Secure Multi-Factor Authentication & Email OTP Module */
 
 import { state } from '../state.js';
 import { updateGaugeVisual } from './dashboard.js';
@@ -12,6 +12,8 @@ const API_BASE_URL = (window.location.protocol.startsWith('http') && window.loca
 let currentRole = 'Student'; // 'Student' | 'TPO'
 let authMode = 'LOGIN';       // 'LOGIN' | 'REGISTER'
 let pendingVerificationEmail = '';
+let pendingVerificationRole = 'Student';
+let pendingAuthMode = 'LOGIN'; // 'LOGIN' | 'REGISTER'
 let pendingResetToken = '';
 
 /**
@@ -84,25 +86,24 @@ export function setAuthRole(role) {
   const tabTpo = document.getElementById('tab-tpo');
   const emailLabel = document.getElementById('auth-email-label');
   const emailInput = document.getElementById('auth-email');
-  const passInput = document.getElementById('auth-password');
 
   if (role === 'Student') {
     if (tabStudent) tabStudent.classList.add('active');
     if (tabTpo) tabTpo.classList.remove('active');
     if (emailLabel) emailLabel.innerText = 'College Email Address';
-    if (emailInput && (!emailInput.value || emailInput.value === 'tpo@university.edu')) {
-      emailInput.value = 'sarvagya.anand070@gmail.com';
-    }
-    if (passInput) passInput.value = 'Sarvo@123';
+    if (emailInput) emailInput.placeholder = 'e.g. student@college.edu';
   } else {
     if (tabTpo) tabTpo.classList.add('active');
     if (tabStudent) tabStudent.classList.remove('active');
-    if (emailLabel) emailLabel.innerText = 'Official College Email';
-    if (emailInput) emailInput.value = 'tpo@university.edu';
-    if (passInput) passInput.value = 'Alex@2026';
+    if (emailLabel) emailLabel.innerText = 'Official College / TPO Email';
+    if (emailInput) emailInput.placeholder = 'e.g. tpo@university.edu';
   }
 
   updateFormUIForCurrentState();
+}
+
+export function demoSignIn(roleType) {
+  setAuthRole(roleType || 'Student');
 }
 
 export function toggleAuthMode() {
@@ -122,19 +123,19 @@ function updateFormUIForCurrentState() {
   const promptEl = document.getElementById('auth-mode-switch-prompt');
   const switchBtn = document.getElementById('auth-mode-switch-btn');
   const hintEl = document.getElementById('password-strength-hint');
-
   const nameInput = document.getElementById('auth-name');
-  const emailInput = document.getElementById('auth-email');
-  const passInput = document.getElementById('auth-password');
-  const confirmPassInput = document.getElementById('auth-confirm-password');
 
   if (hintEl) hintEl.innerText = '';
 
   if (authMode === 'LOGIN') {
-    if (titleEl) titleEl.innerText = currentRole === 'Student' ? 'Student Sign In' : 'TPO Officer Sign In';
-    if (subtitleEl) subtitleEl.innerText = currentRole === 'Student' 
-      ? 'Sign in to access your placement dashboard.' 
-      : 'Sign in to access the campus TPO portal.';
+    if (titleEl) {
+      titleEl.innerText = currentRole === 'Student' ? 'Student Sign In' : 'TPO Officer Sign In';
+    }
+    if (subtitleEl) {
+      subtitleEl.innerText = currentRole === 'Student' 
+        ? 'Sign in to access your candidate placement dashboard.' 
+        : 'Official administrative login for Campus Placement Officers.';
+    }
 
     groupName?.classList.add('hidden');
     groupCollege?.classList.add('hidden');
@@ -143,26 +144,31 @@ function updateFormUIForCurrentState() {
     rowForgotPass?.classList.remove('hidden');
 
     if (submitBtn) {
-      submitBtn.innerHTML = `Sign In to Portal <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      submitBtn.innerHTML = currentRole === 'Student'
+        ? `Sign In to Student Portal <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`
+        : `Authorize TPO Sign In <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
     }
 
     if (promptEl) promptEl.innerText = "Don't have an account?";
     if (switchBtn) switchBtn.innerText = "Create Account";
 
-    if (emailInput && (!emailInput.value || emailInput.value.includes('candidate.'))) {
-      emailInput.value = currentRole === 'Student' ? 'sarvagya.anand070@gmail.com' : 'tpo@university.edu';
-    }
-    if (passInput) passInput.value = currentRole === 'Student' ? 'Sarvo@123' : 'Alex@2026';
-
   } else {
     // REGISTER MODE
-    if (titleEl) titleEl.innerText = currentRole === 'Student' ? 'Create Student Account' : 'Create TPO Officer Account';
-    if (subtitleEl) subtitleEl.innerText = currentRole === 'Student' 
-      ? 'Enter your details to create an account and verify via Email OTP.' 
-      : 'Enter your official details to create a TPO account and verify via Email OTP.';
+    if (titleEl) {
+      titleEl.innerText = currentRole === 'Student' ? 'Create Student Account' : 'Register TPO Officer Account';
+    }
+    if (subtitleEl) {
+      subtitleEl.innerText = currentRole === 'Student' 
+        ? 'Enter your details to create an account and verify via Email OTP.' 
+        : 'Enter your institutional details to register as a Campus Placement Officer.';
+    }
 
     groupName?.classList.remove('hidden');
     groupCollege?.classList.remove('hidden');
+
+    if (nameInput) {
+      nameInput.placeholder = currentRole === 'Student' ? 'e.g. Alexander Wright' : 'e.g. Dr. Robert Vance';
+    }
 
     if (currentRole === 'Student') {
       groupStudentFields?.classList.remove('hidden');
@@ -174,65 +180,13 @@ function updateFormUIForCurrentState() {
     rowForgotPass?.classList.add('hidden');
 
     if (submitBtn) {
-      submitBtn.innerHTML = `Create Account & Send Email OTP <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
+      submitBtn.innerHTML = currentRole === 'Student'
+        ? `Create Student Account & Send OTP <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`
+        : `Register TPO Account & Send OTP <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>`;
     }
 
     if (promptEl) promptEl.innerText = "Already have an account?";
     if (switchBtn) switchBtn.innerText = "Sign In";
-
-    if (nameInput) nameInput.value = nameInput.value || 'Candidate Student';
-    if (emailInput && (emailInput.value === 'sarvagya.anand070@gmail.com' || emailInput.value === 'tpo@university.edu')) {
-      emailInput.value = 'candidate.new@university.edu';
-    }
-    if (passInput) passInput.value = 'CareerNova@2026';
-    if (confirmPassInput) confirmPassInput.value = 'CareerNova@2026';
-  }
-}
-
-const PRESEEDED_USERS = {
-  'sarvagya.anand070@gmail.com': {
-    name: 'Sarvagya Anand',
-    email: 'sarvagya.anand070@gmail.com',
-    college: 'VIT Bhopal University',
-    branch: 'Computer Science & Engineering',
-    year: '2026',
-    role: 'Student'
-  },
-  'alex.wright@university.edu': {
-    name: 'Alexander Wright',
-    email: 'alex.wright@university.edu',
-    college: 'Stanford University',
-    branch: 'Computer Science & Engineering',
-    year: '2026',
-    role: 'Student'
-  },
-  'tpo@university.edu': {
-    name: 'Dr. Robert Vance',
-    email: 'tpo@university.edu',
-    college: 'Stanford University',
-    branch: 'Placement Cell',
-    year: 'Admin',
-    role: 'TPO'
-  }
-};
-
-function performClientSignIn(userData) {
-  if (!userData) return;
-  state.currentUser = userData;
-  applyUserToUI(userData);
-
-  const authView = document.getElementById('auth-view');
-  const appShell = document.getElementById('app-shell');
-  if (authView) authView.classList.add('hidden');
-  if (appShell) appShell.classList.remove('hidden');
-
-  if (userData.role === 'Student') {
-    if (typeof updateGaugeVisual === 'function') updateGaugeVisual(state.currentScore || 0);
-    if (typeof switchView === 'function') switchView('dashboard');
-    showToast(`Welcome back, ${userData.name}!`);
-  } else {
-    if (typeof switchView === 'function') switchView('college');
-    showToast(`Welcome back, ${userData.name} (TPO Portal)`);
   }
 }
 
@@ -246,6 +200,9 @@ export async function handleAuthFormSubmit(event) {
   }
 }
 
+export const handleAuthSubmit = handleAuthFormSubmit;
+
+// Step 1: Login Request (Triggers Email OTP)
 async function handleLoginFlow() {
   const email = document.getElementById('auth-email')?.value?.trim()?.toLowerCase();
   const password = document.getElementById('auth-password')?.value || '';
@@ -255,43 +212,38 @@ async function handleLoginFlow() {
     return;
   }
 
-  showToast('Signing in...');
+  showToast(`Authenticating ${currentRole} credentials...`);
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, role: currentRole })
     });
 
     const data = await res.json();
 
-    if (res.ok && data.success && data.user) {
-      performClientSignIn(data.user);
+    if (!res.ok || !data.success) {
+      showToast(data.message || 'Login failed. Please check your credentials.');
       return;
     }
 
-    if (PRESEEDED_USERS[email]) {
-      performClientSignIn(PRESEEDED_USERS[email]);
-      return;
-    }
+    if (data.otpRequired) {
+      pendingVerificationEmail = data.email || email;
+      pendingVerificationRole = data.role || currentRole;
+      pendingAuthMode = 'LOGIN';
 
-    showToast(data.message || 'Login failed. Please check your credentials.');
+      setupVerificationUI(pendingVerificationEmail, pendingVerificationRole, 'LOGIN');
+      showToast(data.message || `A 6-digit verification code has been dispatched to ${pendingVerificationEmail}.`);
+    }
 
   } catch (err) {
-    console.warn('Network fetch error during login, attempting client-side authentication:', err);
-    const userToLogin = PRESEEDED_USERS[email] || {
-      name: email.includes('@') ? (email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)) : 'Candidate User',
-      email: email,
-      college: currentRole === 'Student' ? 'VIT Bhopal University' : 'Stanford University',
-      branch: currentRole === 'Student' ? 'Computer Science & Engineering' : 'Placement Cell',
-      year: currentRole === 'Student' ? '2026' : 'Admin',
-      role: currentRole
-    };
-    performClientSignIn(userToLogin);
+    console.error('Login network error:', err);
+    showToast('Unable to connect to authentication server. Please ensure server is running.');
   }
 }
 
+// Step 1: Registration Request (Triggers Email OTP)
 async function handleRegistrationFlow() {
   const name = document.getElementById('auth-name')?.value?.trim();
   const email = document.getElementById('auth-email')?.value?.trim();
@@ -306,7 +258,7 @@ async function handleRegistrationFlow() {
     return;
   }
   if (!email || !email.includes('@') || !email.includes('.')) {
-    showToast('Please enter a valid college email address.');
+    showToast('Please enter a valid email address.');
     return;
   }
   if (!college) {
@@ -325,7 +277,7 @@ async function handleRegistrationFlow() {
     return;
   }
 
-  showToast('Creating account and sending Email OTP...');
+  showToast(`Registering ${currentRole} profile and dispatching OTP...`);
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -344,109 +296,156 @@ async function handleRegistrationFlow() {
 
     const data = await res.json();
 
-    // CRITICAL ENFORCEMENT: If email sending failed or server returned failure, block OTP screen
     if (!res.ok || !data.success) {
-      showToast(data.message || 'Unable to send verification code. Please try again.');
+      showToast(data.message || 'Registration failed. Please try again.');
       return;
     }
 
-    // Email dispatch succeeded -> transition to OTP verification screen
-    pendingVerificationEmail = email.toLowerCase().trim();
+    pendingVerificationEmail = (data.email || email).toLowerCase().trim();
+    pendingVerificationRole = data.role || currentRole;
+    pendingAuthMode = 'REGISTER';
 
-    const targetEl = document.getElementById('verify-email-target');
-    if (targetEl) targetEl.innerText = pendingVerificationEmail;
-
-    const codeInput = document.getElementById('auth-verify-code');
-    if (codeInput) codeInput.value = '';
-
-    document.getElementById('auth-main-card')?.classList.add('hidden');
-    document.getElementById('auth-verify-card')?.classList.remove('hidden');
-
-    showToast(data.message || `Verification OTP sent to ${pendingVerificationEmail}. Check your inbox.`);
+    setupVerificationUI(pendingVerificationEmail, pendingVerificationRole, 'REGISTER');
+    showToast(data.message || `Verification code dispatched to ${pendingVerificationEmail}.`);
 
   } catch (err) {
-    console.error('Registration fetch error:', err);
-    showToast('Unable to connect to authentication server. Please try again.');
+    console.error('Registration network error:', err);
+    showToast('Unable to connect to authentication server. Please ensure server is running.');
   }
 }
 
+// Configures the OTP Verification Screen specifically for Student or TPO
+function setupVerificationUI(email, role, mode) {
+  const isTpo = role === 'TPO';
+  const badgeEl = document.getElementById('auth-verify-role-badge');
+  const titleEl = document.getElementById('auth-verify-title');
+  const subtitleEl = document.getElementById('auth-verify-subtitle');
+  const targetEl = document.getElementById('verify-email-target');
+  const codeInput = document.getElementById('auth-verify-code');
+  const submitBtn = document.getElementById('auth-verify-submit-btn');
+
+  if (badgeEl) {
+    badgeEl.innerHTML = isTpo
+      ? `<span style="background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 9999px; font-weight: bold; font-size: 11px; letter-spacing: 0.5px; border: 1px solid #fcd34d;">🛡️ TPO ADMINISTRATIVE AUTHORIZATION</span>`
+      : `<span style="background: #eff6ff; color: #1d4ed8; padding: 4px 12px; border-radius: 9999px; font-weight: bold; font-size: 11px; letter-spacing: 0.5px; border: 1px solid #bfdbfe;">🎓 STUDENT ACCESS VERIFICATION</span>`;
+  }
+
+  if (titleEl) {
+    titleEl.innerText = isTpo ? 'TPO Officer Authorization' : 'Verify Your Email';
+  }
+
+  if (subtitleEl) {
+    subtitleEl.innerHTML = `A 6-digit confirmation code was sent to: <br><strong id="verify-email-target" style="color: var(--primary-accent); word-break: break-all;">${email}</strong><br><span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 6px;">Check your email inbox or spam folder. Enter the code below to proceed.</span>`;
+  } else if (targetEl) {
+    targetEl.innerText = email;
+  }
+
+  if (codeInput) {
+    codeInput.value = ''; // MUST ALWAYS BE BLANK - never prefill or expose OTP on the page
+  }
+
+  if (submitBtn) {
+    submitBtn.innerText = isTpo ? 'Authorize Officer Sign In →' : 'Verify & Enter Portal →';
+  }
+
+  document.getElementById('auth-main-card')?.classList.add('hidden');
+  document.getElementById('auth-verify-card')?.classList.remove('hidden');
+}
+
+// Step 2: Verify OTP and Enter Portal
 export async function verifyEmailCode(event) {
   if (event && event.preventDefault) event.preventDefault();
 
   const codeInput = document.getElementById('auth-verify-code')?.value?.trim();
-  if (!codeInput) {
-    showToast('Please enter the 6-digit verification code.');
+  if (!codeInput || codeInput.length !== 6) {
+    showToast('Please enter the complete 6-digit verification code from your email.');
     return;
   }
 
-  showToast('Verifying code with server...');
+  showToast('Verifying code...');
+
+  const endpoint = pendingAuthMode === 'LOGIN' 
+    ? `${API_BASE_URL}/api/auth/verify-login-otp` 
+    : `${API_BASE_URL}/api/auth/verify-email`;
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/verify-email`, {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: pendingVerificationEmail,
-        otp: codeInput
+        otp: codeInput,
+        role: pendingVerificationRole
       })
     });
 
     const data = await res.json();
 
     if (!res.ok || !data.success || !data.verified) {
-      showToast(data.message || 'Invalid verification code. Please check your email inbox.');
+      showToast(data.message || 'Invalid or expired verification code. Please check your email inbox.');
       return;
     }
 
-    // Verification succeeded -> User account activated!
+    // Success -> Store authenticated user and token
     state.currentUser = data.user;
+    if (data.token) {
+      sessionStorage.setItem('careernova_auth_token', data.token);
+    }
+
     applyUserToUI(state.currentUser);
 
     document.getElementById('auth-view')?.classList.add('hidden');
     document.getElementById('app-shell')?.classList.remove('hidden');
 
-    backToLogin(); // Reset form views for future sign outs
+    backToLogin(); // Reset form state for future signouts
 
     if (state.currentUser.role === 'Student') {
-      updateGaugeVisual(state.currentScore || 0);
-      switchView('dashboard');
-      showToast(`Welcome ${state.currentUser.name}! Email verified successfully.`);
+      if (typeof updateGaugeVisual === 'function') updateGaugeVisual(state.currentScore || 0);
+      if (typeof switchView === 'function') switchView('dashboard');
+      showToast(`Welcome back, ${state.currentUser.name}!`);
     } else {
-      switchView('college');
-      showToast(`Welcome ${state.currentUser.name}! TPO Portal initialized.`);
+      if (typeof switchView === 'function') switchView('college');
+      showToast(`Welcome, ${state.currentUser.name} (TPO Portal Authorized)`);
     }
 
   } catch (err) {
-    console.error('Verify fetch error:', err);
-    showToast('Server error during OTP verification. Please try again.');
+    console.error('Verification error:', err);
+    showToast('Connection error during verification. Please check server status.');
   }
 }
 
 export async function resendVerificationCode() {
   if (!pendingVerificationEmail) {
-    showToast('No pending email verification found. Please register first.');
+    showToast('No pending verification session found. Please sign in or register first.');
     return;
   }
 
-  showToast('Requesting new OTP code...');
+  showToast('Requesting a fresh verification code...');
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/resend-otp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: pendingVerificationEmail })
+      body: JSON.stringify({
+        email: pendingVerificationEmail,
+        role: pendingVerificationRole
+      })
     });
 
     const data = await res.json();
-    if (data.otpCode) {
-      const codeInput = document.getElementById('auth-verify-code');
-      if (codeInput) codeInput.value = data.otpCode;
+    if (!res.ok || !data.success) {
+      showToast(data.message || 'Unable to resend verification code.');
+      return;
     }
-    showToast(data.message || `New OTP code sent to ${pendingVerificationEmail}.`);
+
+    const codeInput = document.getElementById('auth-verify-code');
+    if (codeInput) codeInput.value = ''; // Keep blank for user to enter
+
+    showToast(data.message || `A fresh verification code has been dispatched to ${pendingVerificationEmail}.`);
 
   } catch (err) {
-    console.error('Resend fetch error:', err);
-    showToast('Unable to resend verification code. Please check network connection.');
+    console.error('Resend error:', err);
+    showToast('Unable to resend verification code. Please check connection.');
   }
 }
 
@@ -460,7 +459,9 @@ export function showForgotPassword() {
   document.getElementById('forgot-step-3')?.classList.add('hidden');
 
   const subtitle = document.getElementById('forgot-subtitle');
-  if (subtitle) subtitle.innerText = 'Step 1: Enter your registered email to receive a reset OTP.';
+  if (subtitle) {
+    subtitle.innerText = `Step 1: Enter your registered ${currentRole} email address to receive a recovery code.`;
+  }
 }
 
 export async function sendPasswordResetCode(event) {
@@ -478,7 +479,7 @@ export async function sendPasswordResetCode(event) {
     const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, role: currentRole })
     });
 
     const data = await res.json();
@@ -489,19 +490,18 @@ export async function sendPasswordResetCode(event) {
     }
 
     pendingVerificationEmail = email.toLowerCase().trim();
+    pendingVerificationRole = currentRole;
 
-    if (data.otpCode) {
-      const resetInput = document.getElementById('auth-reset-code');
-      if (resetInput) resetInput.value = data.otpCode;
-    }
+    const resetInput = document.getElementById('auth-reset-code');
+    if (resetInput) resetInput.value = '';
 
     document.getElementById('forgot-step-1')?.classList.add('hidden');
     document.getElementById('forgot-step-2')?.classList.remove('hidden');
 
     const subtitle = document.getElementById('forgot-subtitle');
-    if (subtitle) subtitle.innerText = `Step 2: Enter the 6-digit reset OTP sent to ${pendingVerificationEmail}.`;
+    if (subtitle) subtitle.innerText = `Step 2: Enter the 6-digit recovery code sent to ${pendingVerificationEmail}.`;
 
-    showToast(data.message || `Password reset OTP sent to ${pendingVerificationEmail}.`);
+    showToast(data.message || `Password recovery code dispatched to ${pendingVerificationEmail}.`);
 
   } catch (err) {
     console.error('Forgot password error:', err);
@@ -513,12 +513,12 @@ export async function verifyResetCode(event) {
   if (event && event.preventDefault) event.preventDefault();
 
   const code = document.getElementById('auth-reset-code')?.value?.trim();
-  if (!code) {
+  if (!code || code.length !== 6) {
     showToast('Please enter the 6-digit reset code.');
     return;
   }
 
-  showToast('Verifying reset code...');
+  showToast('Verifying recovery code...');
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/auth/verify-reset-otp`, {
@@ -526,14 +526,15 @@ export async function verifyResetCode(event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: pendingVerificationEmail,
-        otp: code
+        otp: code,
+        role: pendingVerificationRole
       })
     });
 
     const data = await res.json();
 
     if (!res.ok || !data.success || !data.verified) {
-      showToast(data.message || 'Invalid reset code. Please check your email.');
+      showToast(data.message || 'Invalid or expired recovery code. Please check your email.');
       return;
     }
 
@@ -545,7 +546,7 @@ export async function verifyResetCode(event) {
     const subtitle = document.getElementById('forgot-subtitle');
     if (subtitle) subtitle.innerText = 'Step 3: Create a strong new password.';
 
-    showToast('Reset code verified! Create your new password.');
+    showToast('Code verified! Enter your new password.');
 
   } catch (err) {
     console.error('Verify reset code error:', err);
@@ -589,7 +590,7 @@ export async function saveNewPassword(event) {
       return;
     }
 
-    showToast(data.message || 'Password updated successfully! Please sign in with your new password.');
+    showToast('Password updated successfully! Please sign in with your new password.');
     backToLogin();
 
   } catch (err) {
@@ -606,7 +607,7 @@ export function backToLogin() {
   authMode = 'LOGIN';
   updateFormUIForCurrentState();
 
-  // Reset inputs
+  // Clear inputs
   const codeEl = document.getElementById('auth-verify-code');
   if (codeEl) codeEl.value = '';
 
@@ -626,86 +627,115 @@ export function backToLogin() {
   if (hintEl) hintEl.innerText = '';
 }
 
-export async function demoSignIn(roleType) {
-  const email = roleType === 'Student' ? 'alex.wright@university.edu' : 'tpo@university.edu';
-  const password = 'Alex@2026';
-
-  showToast(`Authenticating ${roleType} profile...`);
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok || !data.success) {
-      showToast(data.message || 'Demo profile authentication failed.');
-      return;
-    }
-
-    state.currentUser = data.user;
-    applyUserToUI(state.currentUser);
-
-    document.getElementById('auth-view')?.classList.add('hidden');
-    document.getElementById('app-shell')?.classList.remove('hidden');
-
-    if (roleType === 'Student') {
-      updateGaugeVisual(state.currentScore || 0);
-      switchView('dashboard');
-      showToast('Signed in as Alexander Wright (Student Portal)');
-    } else {
-      switchView('college');
-      showToast('Signed in as Campus Placement Officer (TPO Portal)');
-    }
-
-  } catch (err) {
-    console.error('Demo sign in error:', err);
-    showToast('Server connection error.');
-  }
-}
-
 export function handleSignOut() {
+  state.currentUser = null;
+  sessionStorage.removeItem('careernova_auth_token');
+
   document.getElementById('app-shell')?.classList.add('hidden');
   document.getElementById('auth-view')?.classList.remove('hidden');
   backToLogin();
   showToast('Signed out successfully.');
 }
 
-function applyUserToUI(user) {
+/**
+ * Updates UI based on authenticated user:
+ * - If STUDENT:
+ *   - Shows Candidate tools (Dashboard, DSA, Top Tech Apps, Tracker, Hackathons, AI Chat, Jobs)
+ *   - COMPLETELY HIDES TPO PORTAL
+ * - If TPO OFFICER:
+ *   - Hides Candidate tools (DSA, Tracker, Applications, AI Coach)
+ *   - Shows ONLY necessary TPO items (Placement Roster & Analytics, Campus Drives, Job Postings)
+ */
+export function applyUserToUI(user) {
   if (!user) return;
+
+  const isStudent = user.role === 'Student';
+  const isTpo = user.role === 'TPO';
+
+  // 1. Sidebar User Profile Summary
   const nameEl = document.getElementById('sidebar-user-name');
   if (nameEl) nameEl.innerText = user.name;
 
   const roleEl = document.getElementById('sidebar-user-role');
   if (roleEl) {
-    roleEl.innerText = user.role === 'TPO' 
+    roleEl.innerText = isTpo 
       ? 'Placement Officer' 
-      : `${(user.college || '').split(' ')[0]} • ${user.year || ''}`;
+      : `${(user.college || '').split(' ')[0]} • ${user.branch ? user.branch.split(' ')[0] : 'CS'} '${(user.year || '26').slice(-2)}`;
   }
 
-  const initials = user.role === 'TPO'
+  const initials = isTpo
     ? 'TP'
-    : (user.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'AW';
+    : (user.name || '').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'ST';
   
   const avatarEl = document.getElementById('sidebar-user-avatar');
-  if (avatarEl) avatarEl.innerText = initials;
+  if (avatarEl) {
+    avatarEl.innerText = initials;
+    avatarEl.style.background = isTpo ? 'linear-gradient(135deg, #b45309, #d97706)' : 'linear-gradient(135deg, #1e3a8a, #2563eb)';
+  }
 
   const heroNameEl = document.getElementById('hero-student-name');
-  if (heroNameEl) heroNameEl.innerText = user.role === 'TPO' ? 'TPO Officer' : user.name;
+  if (heroNameEl) heroNameEl.innerText = isTpo ? 'TPO Officer' : user.name;
 
   const heroSubEl = document.getElementById('hero-profile-subtitle');
   if (heroSubEl) {
-    heroSubEl.innerText = user.role === 'TPO'
+    heroSubEl.innerText = isTpo
       ? `${user.college} TPO Office • Campus Placement Coordinator`
       : `${user.college} • ${user.branch} '${(user.year || '').slice(-2)}`;
   }
 
-  // Always show TPO Portal in navigation sidebar after login
-  const tpoNavItem = document.querySelector('.nav-item[data-view="college"]');
-  if (tpoNavItem) {
-    tpoNavItem.style.display = 'flex';
+  // 2. Navigation Item Elements
+  const navCandidateCat = document.getElementById('nav-category-candidate');
+  const navDashboard = document.getElementById('nav-item-dashboard');
+  const navDsa = document.getElementById('nav-item-dsa');
+  const navApplications = document.getElementById('nav-item-applications');
+  const navAppTracker = document.getElementById('nav-item-app-tracker');
+  const navToolsCat = document.getElementById('nav-category-tools');
+  const navAichat = document.getElementById('nav-item-aichat');
+
+  const navTpoCat = document.getElementById('nav-category-tpo');
+  const navCollege = document.getElementById('nav-item-college');
+
+  const navTextHackathons = document.getElementById('nav-text-hackathons');
+  const navTextJobs = document.getElementById('nav-text-jobs');
+
+  if (isStudent) {
+    // STUDENT VIEW: Show candidate navigation
+    navCandidateCat?.classList.remove('hidden');
+    navDashboard?.classList.remove('hidden');
+    navDsa?.classList.remove('hidden');
+    navApplications?.classList.remove('hidden');
+    navAppTracker?.classList.remove('hidden');
+    navToolsCat?.classList.remove('hidden');
+    navAichat?.classList.remove('hidden');
+
+    if (navTextHackathons) navTextHackathons.innerText = 'Hackathons & Drives';
+    if (navTextJobs) navTextJobs.innerText = 'Verified Job Postings';
+
+    // CRITICAL REQUIREMENT: HIDE TPO COMPLETELY FROM STUDENT PORTAL
+    navTpoCat?.classList.add('hidden');
+    if (navCollege) {
+      navCollege.classList.add('hidden');
+      navCollege.style.display = 'none';
+    }
+
+  } else if (isTpo) {
+    // TPO VIEW: Hide candidate preparation tools, show only necessary administrative tools
+    navCandidateCat?.classList.add('hidden');
+    navDashboard?.classList.add('hidden');
+    navDsa?.classList.add('hidden');
+    navApplications?.classList.add('hidden');
+    navAppTracker?.classList.add('hidden');
+    navToolsCat?.classList.add('hidden');
+    navAichat?.classList.add('hidden');
+
+    // Show TPO tools
+    navTpoCat?.classList.remove('hidden');
+    if (navCollege) {
+      navCollege.classList.remove('hidden');
+      navCollege.style.display = 'flex';
+    }
+
+    if (navTextHackathons) navTextHackathons.innerText = 'Campus Recruitment Drives 🔥';
+    if (navTextJobs) navTextJobs.innerText = 'Corporate Job Postings 💼';
   }
 }

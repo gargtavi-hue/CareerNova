@@ -2,7 +2,25 @@
 
 import { state } from './state.js';
 import { showToast } from './modules/toast.js';
-import { handleAuthSubmit, demoSignIn, handleSignOut } from './modules/auth.js';
+import { 
+  handleAuthFormSubmit,
+  handleAuthSubmit, 
+  handleSignOut,
+  checkPasswordStrength,
+  onPasswordInput,
+  togglePasswordVisibility,
+  setAuthRole,
+  toggleAuthMode,
+  verifyEmailCode,
+  resendVerificationCode,
+  showForgotPassword,
+  sendPasswordResetCode,
+  verifyResetCode,
+  saveNewPassword,
+  backToLogin,
+  demoSignIn,
+  applyUserToUI
+} from './modules/auth.js';
 import { switchView, handleGlobalSearch } from './modules/navigation.js';
 import { updateGaugeVisual, updatePriorityTask } from './modules/dashboard.js';
 import { 
@@ -55,7 +73,7 @@ import {
   closeMockResults, 
   restartMockInterview 
 } from './modules/mock-interview.js';
-import { filterTpoRoster, exportTpoReport } from './modules/tpo.js';
+import { filterTpoRoster, exportTpoReport, loadTpoRosterData } from './modules/tpo.js';
 import { initContextChatbot, refreshContextHelp } from './modules/context-chatbot.js';
 import { 
   NotificationManager, 
@@ -78,9 +96,24 @@ import {
 // Expose handlers to global window object for HTML inline event listeners
 window.state = state;
 window.showToast = showToast;
+window.handleAuthFormSubmit = handleAuthFormSubmit;
 window.handleAuthSubmit = handleAuthSubmit;
 window.demoSignIn = demoSignIn;
 window.handleSignOut = handleSignOut;
+window.checkPasswordStrength = checkPasswordStrength;
+window.onPasswordInput = onPasswordInput;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.setAuthRole = setAuthRole;
+window.toggleAuthMode = toggleAuthMode;
+window.verifyEmailCode = verifyEmailCode;
+window.resendVerificationCode = resendVerificationCode;
+window.showForgotPassword = showForgotPassword;
+window.sendPasswordResetCode = sendPasswordResetCode;
+window.verifyResetCode = verifyResetCode;
+window.saveNewPassword = saveNewPassword;
+window.backToLogin = backToLogin;
+window.applyUserToUI = applyUserToUI;
+
 window.switchView = switchView;
 window.handleGlobalSearch = handleGlobalSearch;
 window.updateGaugeVisual = updateGaugeVisual;
@@ -140,6 +173,7 @@ window.restartMockInterview = restartMockInterview;
 // College TPO
 window.filterTpoRoster = filterTpoRoster;
 window.exportTpoReport = exportTpoReport;
+window.loadTpoRosterData = loadTpoRosterData;
 
 // Context Help Assistant
 window.initContextChatbot = initContextChatbot;
@@ -168,6 +202,8 @@ document.addEventListener('DOMContentLoaded', () => {
   initDsaModule();
   initContextChatbot();
   updateAiStatusBadge();
-  notificationManager.updateBadge();
+  if (notificationManager && typeof notificationManager.updateBadge === 'function') {
+    notificationManager.updateBadge();
+  }
   initHackathonsModule();
 });

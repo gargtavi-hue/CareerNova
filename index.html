@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=1280, initial-scale=1.0">
   <title>CareerNova | Candidate & Campus Placement Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
   <!-- Modular Stylesheet Bundle -->
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="css/applications.css">
@@ -47,19 +48,19 @@
           <!-- Name (Shown in Register mode) -->
           <div class="form-group hidden" id="group-auth-name">
             <label class="form-label" for="auth-name">Full Name</label>
-            <input type="text" id="auth-name" class="form-input" placeholder="e.g. Alex Wright" value="Alex Wright">
+            <input type="text" id="auth-name" class="form-input" placeholder="e.g. Alexander Wright" autocomplete="name">
           </div>
 
           <!-- Email -->
           <div class="form-group">
             <label class="form-label" id="auth-email-label" for="auth-email">College Email Address</label>
-            <input type="email" id="auth-email" class="form-input" placeholder="sarvagya.anand070@gmail.com" value="sarvagya.anand070@gmail.com" required>
+            <input type="email" id="auth-email" class="form-input" placeholder="e.g. student@college.edu" autocomplete="email" required>
           </div>
 
           <!-- College (Shown in Register mode) -->
           <div class="form-group hidden" id="group-auth-college">
             <label class="form-label" for="auth-college">College / University Name</label>
-            <input type="text" id="auth-college" class="form-input" placeholder="e.g. Stanford University / IIT Bombay" value="Stanford University">
+            <input type="text" id="auth-college" class="form-input" placeholder="e.g. Stanford University / IIT Bombay">
           </div>
 
           <!-- Student Fields: Branch & Year (Shown in Register mode for Student) -->
@@ -90,7 +91,7 @@
           <div class="form-group">
             <label class="form-label" for="auth-password">Password</label>
             <div class="password-input-wrapper">
-              <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" value="Sarvo@123" oninput="onPasswordInput(this.value)" required>
+              <input type="password" id="auth-password" class="form-input" placeholder="Enter your password" oninput="onPasswordInput(this.value)" autocomplete="current-password" required>
               <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-password', this)" title="Show/Hide Password">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               </button>
@@ -101,7 +102,7 @@
           <div class="form-group hidden" id="group-confirm-password">
             <label class="form-label" for="auth-confirm-password">Confirm Password</label>
             <div class="password-input-wrapper">
-              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Re-enter password">
+              <input type="password" id="auth-confirm-password" class="form-input" placeholder="Re-enter password" autocomplete="new-password">
               <button type="button" class="btn-toggle-password" onclick="togglePasswordVisibility('auth-confirm-password', this)" title="Show/Hide Password">
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
               </button>
@@ -130,20 +131,25 @@
 
       <!-- Verification Screen Card -->
       <div id="auth-verify-card" class="hidden">
-        <h1 class="auth-card-title">Verify Your Email</h1>
-        <p class="auth-card-subtitle">We sent a 6-digit verification code to: <br><strong id="verify-email-target" style="color: var(--primary-accent); word-break: break-all;"></strong></p>
+        <div id="auth-verify-role-badge" style="display: inline-block; margin-bottom: 12px;"></div>
+        <h1 class="auth-card-title" id="auth-verify-title">Verify Your Email</h1>
+        <p class="auth-card-subtitle" id="auth-verify-subtitle">
+          A 6-digit confirmation code was sent to: <br>
+          <strong id="verify-email-target" style="color: var(--primary-accent); word-break: break-all;"></strong>
+          <br><span style="font-size: 12px; color: var(--text-muted); display: block; margin-top: 6px;">Check your email inbox or spam folder. Enter the code below to proceed.</span>
+        </p>
 
         <form id="auth-verify-form" onsubmit="verifyEmailCode(event)">
           <div class="form-group">
-            <label class="form-label" for="auth-verify-code">6-Digit Verification Code</label>
-            <input type="text" id="auth-verify-code" class="form-input verification-input" placeholder="Enter OTP code" maxlength="6" required>
+            <label class="form-label" id="auth-verify-label" for="auth-verify-code">6-Digit Verification Code</label>
+            <input type="text" id="auth-verify-code" class="form-input verification-input" placeholder="• • • • • •" maxlength="6" autocomplete="one-time-code" required>
           </div>
 
-          <button type="submit" class="btn-primary" style="width: 100%; margin-top: 8px;">
-            Verify Email & Enter Portal
+          <button type="submit" class="btn-primary" id="auth-verify-submit-btn" style="width: 100%; margin-top: 8px;">
+            Verify & Enter Portal →
           </button>
 
-          <button type="button" class="btn-secondary-auth" onclick="resendVerificationCode()">
+          <button type="button" class="btn-secondary-auth" id="auth-resend-btn" onclick="resendVerificationCode()">
             Resend Code to Email
           </button>
         </form>
@@ -236,51 +242,55 @@
       </div>
 
       <nav class="sidebar-nav">
-        <div class="nav-category">Candidate Menu</div>
+        <!-- Student Candidate Menu (Visible only to Students) -->
+        <div class="nav-category" id="nav-category-candidate">Candidate Menu</div>
 
-        <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+        <div class="nav-item active" id="nav-item-dashboard" data-view="dashboard" onclick="switchView('dashboard')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
           <span>Dashboard</span>
         </div>
 
-        <div class="nav-item" data-view="dsa" onclick="switchView('dsa')">
+        <div class="nav-item" id="nav-item-dsa" data-view="dsa" onclick="switchView('dsa')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
           <span>DSA Practice</span>
         </div>
 
-        <div class="nav-item" data-view="applications" onclick="switchView('applications')">
+        <div class="nav-item" id="nav-item-applications" data-view="applications" onclick="switchView('applications')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span>Top Tech Applications</span>
         </div>
 
-        <div class="nav-item" data-view="application-tracker" onclick="switchView('application-tracker')">
+        <div class="nav-item" id="nav-item-app-tracker" data-view="application-tracker" onclick="switchView('application-tracker')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a3 3 0 006 0M9 5h6"/>
           </svg>
-           <span>Application Tracker</span>
+          <span>Application Tracker</span>
         </div>
 
-        <div class="nav-item" data-view="hackathons" onclick="switchView('hackathons')">
+        <div class="nav-item" id="nav-item-hackathons" data-view="hackathons" onclick="switchView('hackathons')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L5.6 15.11a2 2 0 00-1.022.547l-1.3 1.3a.75.75 0 00.53 1.28h16.384a.75.75 0 00.53-1.28l-1.3-1.3zM12 3v9"/></svg>
-          <span>Hackathons & Drives</span>
+          <span id="nav-text-hackathons">Hackathons & Drives</span>
         </div>
 
-        <div class="nav-category" style="margin-top: 14px;">Tools & Institution</div>
+        <div class="nav-category" id="nav-category-tools" style="margin-top: 14px;">Tools & Opportunities</div>
 
-        <div class="nav-item" data-view="aichat" onclick="switchView('aichat')">
+        <div class="nav-item" id="nav-item-aichat" data-view="aichat" onclick="switchView('aichat')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           <span>Nova AI (Chatbot) ✨</span>
         </div>
 
-        <div class="nav-item" data-view="jobs" onclick="switchView('jobs')">
+        <div class="nav-item" id="nav-item-jobs" data-view="jobs" onclick="switchView('jobs')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          <span>Verified Job Postings</span>
+          <span id="nav-text-jobs">Verified Job Postings</span>
         </div>
 
-        <div class="nav-item" data-view="college" onclick="switchView('college')">
+        <!-- TPO Officer Menu (Visible ONLY to TPO Officers, completely hidden from Students) -->
+        <div class="nav-category hidden" id="nav-category-tpo" style="margin-top: 14px;">TPO Placement Administration</div>
+
+        <div class="nav-item hidden" id="nav-item-college" data-view="college" onclick="switchView('college')">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h1M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-          <span>College TPO Portal 🎓</span>
+          <span>Student Placement Roster 🎓</span>
         </div>
       </nav>
 
