@@ -583,3 +583,30 @@ body.applications-active #global-search-container {
     width: 100%;
   }
 }
+/* Application Tracker & Stats */
+.tracker-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0}
+.tracker-stat-card{background:#fff;padding:12px;border-radius:8px;border:1px solid #e5e7eb}
+.tracker-stat-card span{font-size:.8rem;color:#6b7280;display:block}
+.tracker-stat-card strong{font-size:1.4rem;color:#111827}
+.tracker-toolbar{display:flex;gap:10px;margin-bottom:16px}
+.tracker-toolbar .form-input{padding:8px 12px;border:1px solid #d1d5db;border-radius:6px}
+#application-search{flex:1}
+
+/* Table & Badges */
+.app-table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+.app-table th,.app-table td{padding:10px 14px;text-align:left;border-bottom:1px solid #f3f4f6;font-size:.875rem}
+.app-table th{background:#f9fafb;font-weight:600}
+.badge{padding:3px 8px;border-radius:12px;font-size:.75rem;font-weight:600}
+.badge.applied{background:#e0f2fe;color:#0369a1}
+.badge.interview{background:#fef3c7;color:#b45309}
+.badge.offer{background:#dcfce7;color:#15803d}
+.badge.rejected{background:#fee2e2;color:#b91c1c}
+.btn-delete{background:none;color:#ef4444;border:1px solid #fca5a5;padding:4px 8px;border-radius:4px;cursor:pointer}
+
+/* Modal Popup */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:999}
+.modal-overlay.hidden{display:none}
+.modal-content{background:#fff;padding:20px;border-radius:10px;width:90%;max-width:400px}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+#app-form{display:flex;flex-direction:column;gap:10px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
