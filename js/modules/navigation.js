@@ -78,6 +78,8 @@ export function handleGlobalSearch(query) {
       const event = new Event('input', { bubbles: true });
       hackSearch.dispatchEvent(event);
     }
+  } else if (q.includes('tracker') || q.includes('track') || q.includes('stat') || q.includes('applied')) {
+    switchView('application-tracker');
   } else if (q.includes('application') || q.includes('company') || q.includes('tcs') || q.includes('nvidia') || q.includes('infosys')) {
     if (state.currentUser?.role !== 'TPO') {
       switchView('applications');
